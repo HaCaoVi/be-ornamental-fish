@@ -43,8 +43,11 @@ export class UsersController {
   }
 
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @Delete('delete-user/:id')
+  @ResponseMessage("Deleted user")
+  remove(
+    @UserReq() user: IToken,
+    @Param('id', ParseObjectIdPipe) id: string) {
+    return this.usersService.remove(user, id);
   }
 }

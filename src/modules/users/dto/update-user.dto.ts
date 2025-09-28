@@ -8,8 +8,4 @@ export class UpdateUserDto extends PartialType(
     @IsOptional()
     @IsBoolean({ message: "isBanned must be a valid boolean" })
     isBanned: boolean;
-
-    @IsOptional()
-    @IsBoolean({ message: "isDeleted must be a valid boolean" })
-    isDeleted: boolean;
 }

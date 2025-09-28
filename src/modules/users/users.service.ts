@@ -122,7 +122,7 @@ export class UsersService {
       if (user.email === this.configService.get<string>("ROOT_ADMIN_ACCOUNT")) throw new BadRequestException("Can't update this user!")
 
       const updated = await this.userModel.updateOne({ _id: id },
-        { ...rest, name, isActivated, updatedBy: author.sub },
+        { ...rest, name, isActivated, updatedBy: author.sub, bannedBy: rest.isBanned ? author.sub : null },
         { runValidators: true }
       );
 
@@ -137,7 +137,22 @@ export class UsersService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(author: IToken, id: string) {
+    try {
+      const result = await this.userModel.softDeleteOne(
+        { _id: id, email: { $ne: this.configService.get<string>("ROOT_ADMIN_ACCOUNT") } }, author.sub.toString()
+      );
+      if (result.matchedCount === 0) {
+        throw new NotFoundException(`User with id ${id} not found or cannot be delete this user!`);
+      }
+      return {
+        success: true,
+        id,
+      };
+    } catch (error) {
+      this.logger.error("Deleted user error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
   }
 }
