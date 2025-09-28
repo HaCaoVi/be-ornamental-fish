@@ -1,7 +1,7 @@
-import { IsDate, IsEmail, IsEnum, IsMongoId, IsNotEmpty, Length, MinLength } from 'class-validator';
+import { IsDate, IsEmail, IsEnum, IsMongoId, IsNotEmpty, Length } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Gender } from '../schemas/user.schema';
 import { IsPastDate } from '@common/decorators/validate.decorator';
+import { Gender } from '@common/types/type';
 
 export class CreateUserDto {
     @IsNotEmpty({ message: 'name is required!' })

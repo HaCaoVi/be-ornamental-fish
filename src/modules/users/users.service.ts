@@ -2,9 +2,11 @@ import { BadRequestException, HttpException, Injectable, InternalServerErrorExce
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { AccountType, User } from './schemas/user.schema';
+import { User } from './schemas/user.schema';
 import { hashBcrypt } from '@common/helpers/security.helper';
 import type { UserModelType } from '@modules/users/schemas/user.schema';
+import type { IToken } from '@common/interfaces/customize.interface';
+import { AccountType } from '@common/types/type';
 
 @Injectable()
 export class UsersService {
@@ -14,7 +16,7 @@ export class UsersService {
     @InjectModel(User.name) private userModel: UserModelType,
   ) { }
 
-  async create(createUserDto: CreateUserDto) {
+  async create(author: IToken, createUserDto: CreateUserDto) {
     try {
       const { password, ...rest } = createUserDto
 
@@ -23,6 +25,7 @@ export class UsersService {
         ...rest,
         password: hashPass,
         accountType: AccountType.LOCAL,
+        createdBy: author.sub
       })
 
       return {

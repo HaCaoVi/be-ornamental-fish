@@ -2,7 +2,8 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ResponseMessage } from '@common/decorators/customize.decorator';
+import { ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
+import type { IToken } from '@common/interfaces/customize.interface';
 
 @Controller('users')
 export class UsersController {
@@ -11,9 +12,10 @@ export class UsersController {
   @Post("create-user")
   @ResponseMessage("Created new user")
   create(
+    @UserReq() user: IToken,
     @Body() createUserDto: CreateUserDto
   ) {
-    return this.usersService.create(createUserDto);
+    return this.usersService.create(user, createUserDto);
   }
 
   @Get()

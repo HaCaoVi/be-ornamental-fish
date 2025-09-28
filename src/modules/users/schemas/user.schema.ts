@@ -1,22 +1,11 @@
 
 import { SoftDeleteModel } from '@common/interfaces/customize.interface';
+import { AccountType, Gender } from '@common/types/type';
 import { Role } from '@modules/roles/schemas/role.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
-
-export enum Gender {
-    Male = 'MALE',
-    Female = 'FEMALE',
-    Other = 'OTHER',
-}
-
-export enum AccountType {
-    LOCAL = 'LOCAL',
-    GOOGLE = 'GOOGLE',
-    FACEBOOK = 'FACEBOOK',
-}
 
 @Schema({ timestamps: true })
 export class User {
@@ -46,7 +35,7 @@ export class User {
         default: AccountType.LOCAL,
         enum: AccountType,
     })
-    accountType: AccountType
+    accountType: string
 
     @Prop({ type: Types.ObjectId, ref: "Role" })
     role: Role;

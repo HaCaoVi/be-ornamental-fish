@@ -1,4 +1,4 @@
-import { AccountType, User } from '@modules/users/schemas/user.schema';
+import { User } from '@modules/users/schemas/user.schema';
 import { HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { UserModelType } from '@modules/users/schemas/user.schema';
@@ -8,6 +8,7 @@ import { IToken } from '@common/interfaces/customize.interface';
 import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import type { Response } from 'express';
+import { AccountType } from '@common/types/type';
 
 @Injectable()
 export class AuthService {
