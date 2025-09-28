@@ -105,6 +105,7 @@ export class UsersService {
         .lean<User>()
         .exec();
       if (!user) throw new NotFoundException(`User with id ${id} not found`);
+      if (user.isBanned) throw new BadRequestException(`User with id ${id} has been banned`);
       return user;
     } catch (error) {
       this.logger.error("Get user error: " + error.message, error.stack);

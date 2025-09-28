@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
+import { Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
 import type { IToken } from '@common/interfaces/customize.interface';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 
@@ -27,6 +27,7 @@ export class UsersController {
     return this.usersService.findAll(+current, +pageSize, filters);
   }
 
+  @Public()
   @Get('get-user/:id')
   findOne(@Param('id', ParseObjectIdPipe) id: string) {
     return this.usersService.findOne(id);
