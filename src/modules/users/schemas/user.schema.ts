@@ -54,6 +54,9 @@ export class User {
     @Prop({ default: null })
     refreshToken: string;
 
+    @Prop({ default: null })
+    isActivated: boolean;
+
     @Prop({ default: false })
     isDeleted: boolean;
 
