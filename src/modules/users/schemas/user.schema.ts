@@ -1,9 +1,10 @@
 
 import { SoftDeleteModel } from '@common/interfaces/customize.interface';
+import { softDeletePlugin } from '@common/plugins/soft-delete.plugin';
 import { AccountType, Gender } from '@common/types/type';
 import { Role } from '@modules/roles/schemas/role.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import mongoose, { HydratedDocument, Types } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -37,14 +38,20 @@ export class User {
     })
     accountType: string
 
-    @Prop({ type: Types.ObjectId, ref: "Role" })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "Role" })
     role: Role;
 
     @Prop({ default: null })
     refreshToken: string;
 
-    @Prop({ default: null })
+    @Prop({ default: false })
     isActivated: boolean;
+
+    @Prop({ default: null })
+    codeActive: string
+
+    @Prop({ default: null })
+    codeExpired: Date
 
     @Prop({ default: false })
     isDeleted: boolean;
@@ -52,16 +59,16 @@ export class User {
     @Prop({ default: false })
     isBanned: boolean;
 
-    @Prop({ type: Types.ObjectId, ref: "User", default: null })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
     createdBy: Types.ObjectId;
 
-    @Prop({ type: Types.ObjectId, ref: "User", default: null })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
     updatedBy: Types.ObjectId;
 
-    @Prop({ type: Types.ObjectId, ref: "User", default: null })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
     deletedBy: Types.ObjectId;
 
-    @Prop({ type: Types.ObjectId, ref: "User", default: null })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
     bannedBy: Types.ObjectId;
 
     @Prop()
@@ -78,5 +85,7 @@ export class User {
 export const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.index({ email: 1, accountType: 1 }, { unique: true });
+
+UserSchema.plugin(softDeletePlugin);
 
 export type UserModelType = SoftDeleteModel<UserDocument>;

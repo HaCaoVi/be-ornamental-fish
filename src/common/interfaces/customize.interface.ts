@@ -23,3 +23,13 @@ export interface IToken {
     iat?: number,
     exp?: number
 }
+
+export interface PaginatedResult<T> {
+    meta: {
+        current: number,
+        pageSize: number,
+        pages: number,
+        total: number,
+    },
+    result: T[],
+}

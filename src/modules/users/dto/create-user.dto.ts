@@ -2,6 +2,7 @@ import { IsDate, IsEmail, IsEnum, IsMongoId, IsNotEmpty, Length } from 'class-va
 import { Type } from 'class-transformer';
 import { IsPastDate } from '@common/decorators/validate.decorator';
 import { Gender } from '@common/types/type';
+import { Types } from 'mongoose';
 
 export class CreateUserDto {
     @IsNotEmpty({ message: 'name is required!' })
@@ -30,5 +31,5 @@ export class CreateUserDto {
 
     @IsNotEmpty({ message: 'role is required!' })
     @IsMongoId({ message: 'role must be a valid ObjectId!' })
-    role: string;
+    role: Types.ObjectId;
 }
