@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -91,8 +91,24 @@ export class UsersService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: string): Promise<User> {
+    try {
+      const user = await this.userModel
+        .findById(id)
+        .select("-password -refreshToken")
+        .populate({
+          path: 'role',
+          select: "_id name"
+        })
+        .lean<User>()
+        .exec();
+      if (!user) throw new NotFoundException(`User with id ${id} not found`);
+      return user;
+    } catch (error) {
+      this.logger.error("Get user error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {

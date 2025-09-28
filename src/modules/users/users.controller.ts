@@ -4,6 +4,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
 import type { IToken } from '@common/interfaces/customize.interface';
+import { ParseObjectIdPipe } from '@nestjs/mongoose';
 
 @Controller('users')
 export class UsersController {
@@ -26,9 +27,9 @@ export class UsersController {
     return this.usersService.findAll(+current, +pageSize, filters);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  @Get('get-user/:id')
+  findOne(@Param('id', ParseObjectIdPipe) id: string) {
+    return this.usersService.findOne(id);
   }
 
   @Patch(':id')
