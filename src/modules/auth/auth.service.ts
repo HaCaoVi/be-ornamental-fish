@@ -1,5 +1,5 @@
 import { User } from '@modules/users/schemas/user.schema';
-import { HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { UserModelType } from '@modules/users/schemas/user.schema';
 import { compareHashBcrypt, hashTokenSHA256 } from '@common/helpers/security.helper';
@@ -90,6 +90,58 @@ export class AuthService {
             };
         } catch (error) {
             this.logger.error("Login error: " + error.message, error.stack);
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Something went wrong!');
+        }
+    }
+
+    async verifyRefreshTokenJWT(token: string) {
+        try {
+            return this.jwtService.verify(token, {
+                secret: this.configService.get<string>("JWT_REFRESH_TOKEN_SECRET"),
+            });
+        } catch (error) {
+            this.logger.warn(`Invalid refresh token: ${error.message}`);
+            return null;
+        }
+    }
+
+
+    async refreshToken(res: Response, currentRefreshToken: string) {
+        try {
+            const user = await this.verifyRefreshTokenJWT(currentRefreshToken)
+            if (!user) {
+                throw new BadRequestException('Token invalid, please login again!');
+            }
+
+            const { exp, iat, ...dataToken } = user
+
+            const isRefreshTokenValid = await this.userModel.findOne({ _id: dataToken.sub, refreshToken: hashTokenSHA256(currentRefreshToken) })
+
+            if (!isRefreshTokenValid) {
+                throw new BadRequestException(`Token invalid!`);
+            }
+
+            const [newRefreshToken, access_token] = await Promise.all([
+                this.signRefreshTokenJWT(dataToken),
+                this.signAccessTokenJWT(dataToken),
+            ]);
+
+            const updateRefreshToken = await this.userModel.updateOne(
+                { _id: dataToken.sub },
+                { $set: { refreshToken: hashTokenSHA256(newRefreshToken) } }
+            );
+            if (updateRefreshToken.modifiedCount === 0) {
+                throw new InternalServerErrorException("Failed to update refresh token");
+            }
+
+            this.addRefreshTokenInCookie(res, newRefreshToken)
+
+            return {
+                access_token
+            };
+        } catch (error) {
+            this.logger.error("Refresh token error: " + error.message, error.stack);
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Something went wrong!');
         }
