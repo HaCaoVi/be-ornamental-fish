@@ -1,4 +1,4 @@
-import { IsDate, IsEmail, IsEnum, IsMongoId, IsNotEmpty, Length } from 'class-validator';
+import { IsBoolean, IsDate, IsEmail, IsEnum, IsMongoId, IsNotEmpty, IsOptional, Length } from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsPastDate } from '@common/decorators/validate.decorator';
 import { Gender } from '@common/types/type';
@@ -32,4 +32,8 @@ export class CreateUserDto {
     @IsNotEmpty({ message: 'role is required!' })
     @IsMongoId({ message: 'role must be a valid ObjectId!' })
     role: Types.ObjectId;
+
+    @IsOptional()
+    @IsBoolean({ message: "isActivated must be a valid boolean" })
+    isActivated: boolean
 }

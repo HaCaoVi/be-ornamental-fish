@@ -16,6 +16,11 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
         if (!user) {
             throw new UnauthorizedException("Username or password invalid!");
         }
+
+        if (!user.isActivated) {
+            throw new UnauthorizedException("Your account is not activated. Please check your email to activate.");
+        }
+
         if (user.isBanned) {
             throw new ForbiddenException("Your account has been banned!");
         }

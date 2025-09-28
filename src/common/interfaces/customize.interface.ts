@@ -13,11 +13,11 @@ export interface SoftDeleteModel<T> extends Model<T> {
 }
 
 export interface IToken {
-    sub: string | Types.ObjectId,
+    sub: Types.ObjectId,
     email: string,
     name: string,
     role: {
-        _id: string | Types.ObjectId,
+        _id: Types.ObjectId,
         name: string
     }
     iat?: number,
