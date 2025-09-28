@@ -11,6 +11,7 @@ import { buildPopulateConfigFromStrings } from '@common/helpers/mongoose-populat
 import { normalizeFilters, normalizeSort } from '@common/helpers/convert.helper';
 import { Types } from 'mongoose';
 import { buildMeta } from '@common/helpers/customize.helper';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UsersService {
@@ -18,6 +19,7 @@ export class UsersService {
 
   constructor(
     @InjectModel(User.name) private userModel: UserModelType,
+    private configService: ConfigService
   ) { }
 
   async create(author: IToken, createUserDto: CreateUserDto) {
@@ -111,8 +113,28 @@ export class UsersService {
     }
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(author: IToken, id: string, updateUserDto: UpdateUserDto) {
+    try {
+      const { name, isActivated, role, ...rest } = updateUserDto;
+
+      const user = await this.userModel.findById(id).lean().exec();
+      if (!user) throw new NotFoundException(`User with id ${id} not found`);
+      if (user.email === this.configService.get<string>("ROOT_ADMIN_ACCOUNT")) throw new BadRequestException("Can't update this user!")
+
+      const updated = await this.userModel.updateOne({ _id: id },
+        { ...rest, name, isActivated, updatedBy: author.sub },
+        { runValidators: true }
+      );
+
+      return {
+        matchedCount: updated.matchedCount,
+        modifiedCount: updated.modifiedCount
+      };
+    } catch (error) {
+      this.logger.error("Updated user error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
   }
 
   remove(id: number) {

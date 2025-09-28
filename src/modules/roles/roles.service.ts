@@ -29,10 +29,6 @@ export class RolesService {
     try {
       const role = await this.roleModel
         .findById(id)
-        .populate({
-          path: 'permissions',
-          select: "_id name apiPath method module isDeleted"
-        })
         .lean<Role>()
         .exec();
       if (!role) throw new NotFoundException(`Role with id ${id} not found`);
