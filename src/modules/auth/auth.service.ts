@@ -34,16 +34,6 @@ export class AuthService {
         })
     }
 
-    addRefreshTokenInCookie(res: Response, token: string) {
-        res.clearCookie("refresh_token")
-        res.cookie('refresh_token', token, {
-            httpOnly: true,
-            secure: this.configService.get<string>("NODE_ENV") === "production",
-            maxAge: +ms(this.configService.get<string>("JWT_REFRESH_EXPIRE") as ms.StringValue),
-            sameSite: "strict",
-        })
-    }
-
     async findUserByUsername(username: string): Promise<User | null> {
         const user = await this.userModel
             .findOne({ email: username, accountType: AccountType.LOCAL })
@@ -64,7 +54,7 @@ export class AuthService {
         return isMatch ? user : null;
     }
 
-    async login(res: Response, user: IToken) {
+    async login(user: IToken) {
         try {
             const { email, name, role, sub } = user
             const access_token = await this.signAccessTokenJWT(user);
@@ -77,10 +67,9 @@ export class AuthService {
                 throw new InternalServerErrorException("Failed to update refresh token");
             }
 
-            this.addRefreshTokenInCookie(res, refresh_token)
-
             return {
-                access_token: access_token,
+                refresh_token,
+                access_token,
                 user: {
                     _id: sub,
                     email,
@@ -106,8 +95,7 @@ export class AuthService {
         }
     }
 
-
-    async refreshToken(res: Response, currentRefreshToken: string) {
+    async refreshToken(currentRefreshToken: string) {
         try {
             const user = await this.verifyRefreshTokenJWT(currentRefreshToken)
             if (!user) {
@@ -135,9 +123,8 @@ export class AuthService {
                 throw new InternalServerErrorException("Failed to update refresh token");
             }
 
-            this.addRefreshTokenInCookie(res, newRefreshToken)
-
             return {
+                refresh_token: newRefreshToken,
                 access_token
             };
         } catch (error) {

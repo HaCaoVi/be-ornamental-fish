@@ -29,6 +29,15 @@ async function bootstrap() {
     type: VersioningType.URI,
     defaultVersion: ['1'],
   });
+  //config cors
+  app.enableCors(
+    {
+      "origin": configService.get<string>("FE_ORIGIN_URL"),
+      "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+      "preflightContinue": false,
+      credentials: true
+    }
+  );
 
   await app.listen(configService.get<string>("PORT") ?? 3000);
 }

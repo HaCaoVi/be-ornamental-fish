@@ -8,7 +8,7 @@ import type { UserModelType } from '@modules/users/schemas/user.schema';
 import type { IToken, PaginatedResult } from '@common/interfaces/customize.interface';
 import { AccountType } from '@common/types/type';
 import { buildPopulateConfigFromStrings } from '@common/helpers/mongoose-populate.helper';
-import { normalizeFilters, normalizeSort } from '@common/helpers/convert.helper';
+import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
 import { Types } from 'mongoose';
 import { buildMeta } from '@common/helpers/customize.helper';
 import { ConfigService } from '@nestjs/config';
@@ -55,13 +55,13 @@ export class UsersService {
 
       const { sort, populate, fields, filters, search } = query
       const populateConfig = buildPopulateConfigFromStrings(populate, fields)
-      const normalizedFilters = normalizeFilters(filters);
+      const normalizedFilters = parseFilters(filters)
       const normalizedSort = normalizeSort(sort, ["createdAt", "updatedAt", "email", "name"]);
 
       if (search) {
         const regex = new RegExp(search, "i");
         normalizedFilters.$or = [
-          Types.ObjectId.isValid(search) ? { _id: new Types.ObjectId(search + "") } : null,
+          Types.ObjectId.isValid(search) ? { _id: new Types.ObjectId(search + '') } : null,
           { name: regex },
           { email: regex },
         ].filter(Boolean);
@@ -116,7 +116,7 @@ export class UsersService {
 
   async update(author: IToken, id: string, updateUserDto: UpdateUserDto) {
     try {
-      const { name, isActivated, role, ...rest } = updateUserDto;
+      const { name, isActivated, ...rest } = updateUserDto;
 
       const user = await this.userModel.findById(id).lean().exec();
       if (!user) throw new NotFoundException(`User with id ${id} not found`);

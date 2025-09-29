@@ -1,9 +1,8 @@
 import { Cookies, Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
-import { Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { AuthService } from './auth.service';
 import type { IToken } from '@common/interfaces/customize.interface';
-import type { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -15,9 +14,8 @@ export class AuthController {
     @ResponseMessage("Login successfully")
     async login(
         @UserReq() user: IToken,
-        @Res({ passthrough: true }) res: Response
     ) {
-        return this.authService.login(res, user);
+        return this.authService.login(user);
     }
 
     @Get('account')
@@ -32,9 +30,8 @@ export class AuthController {
     @Get('refresh')
     @ResponseMessage("Refresh Successfully")
     refreshToken(
-        @Res({ passthrough: true }) res: Response,
         @Cookies('refresh_token') refreshToken: string
     ) {
-        return this.authService.refreshToken(res, refreshToken)
+        return this.authService.refreshToken(refreshToken)
     }
 }

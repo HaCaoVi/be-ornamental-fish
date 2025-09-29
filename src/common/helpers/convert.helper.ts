@@ -56,3 +56,25 @@ export const normalizeSort = (
 
     return Object.keys(normalizedSort).length > 0 ? normalizedSort : { createdAt: -1 };
 }
+
+export const parseFilters = (rawFilters: any) => {
+    if (!rawFilters || rawFilters.length === 0) return {};
+
+    let filters = rawFilters;
+
+    // Nếu filters là string, parse 1 lần
+    if (typeof filters === "string") {
+        try {
+            filters = JSON.parse(filters);
+        } catch { }
+    }
+    if (filters.filters === "") return {}
+    // Nếu filters còn nested { filters: "..." }, unwrap thêm
+    if (filters.filters && typeof filters.filters === "string") {
+        try {
+            filters = JSON.parse(filters.filters);
+        } catch { }
+    }
+
+    return filters;
+}
