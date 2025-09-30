@@ -15,6 +15,7 @@ export class RolesService {
     try {
       const result = await this.roleModel
         .find()
+        .select("_id name")
         .lean<Role[]>()
         .exec()
       return result
@@ -29,6 +30,7 @@ export class RolesService {
     try {
       const role = await this.roleModel
         .findById(id)
+        .select("_id name")
         .lean<Role>()
         .exec();
       if (!role) throw new NotFoundException(`Role with id ${id} not found`);
