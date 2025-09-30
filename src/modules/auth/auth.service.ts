@@ -122,7 +122,6 @@ export class AuthService {
             if (updateRefreshToken.modifiedCount === 0) {
                 throw new InternalServerErrorException("Failed to update refresh token");
             }
-
             return {
                 refresh_token: newRefreshToken,
                 access_token
