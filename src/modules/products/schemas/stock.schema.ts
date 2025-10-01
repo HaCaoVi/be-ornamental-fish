@@ -14,8 +14,8 @@ export class Stock {
     @Prop({ required: true, min: 0 })
     quantity: number;
 
-    @Prop({ required: true, min: 0 })
-    sold: number
+    @Prop({ default: 0, min: 0 })
+    sold: number;
 
     createdAt: Date;
     updatedAt: Date;

@@ -1,37 +1,67 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateFishDto } from './dto/create-product.dto';
 import { UpdateFishDto } from './dto/update-product.dto';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Product, type ProductModelType } from './schemas/product.schema';
 import type { IToken } from '@common/interfaces/customize.interface';
+import { Connection, Model } from 'mongoose';
+import { Stock } from './schemas/stock.schema';
+import { Gallery } from './schemas/gallery.schema';
+import { FishesService } from '@modules/fishes/fishes.service';
+import { CategoriesService } from '@modules/categories/categories.service';
 
 @Injectable()
 export class ProductsService {
   private readonly logger = new Logger(ProductsService.name);
 
   constructor(
+    @InjectConnection() private readonly connection: Connection,
     @InjectModel(Product.name) private productModel: ProductModelType,
+    @InjectModel(Product.name) private galleryModel: Model<Gallery>,
+    @InjectModel(Product.name) private stockModel: Model<Stock>,
+    private fishService: FishesService,
+    private categoryService: CategoriesService
   ) { }
 
   async createFish(author: IToken, createFishDto: CreateFishDto) {
+    const session = await this.connection.startSession();
+    session.startTransaction();
     try {
-      const { color, size, ...rest } = createFishDto
-      const newFish = await this.productModel.create({
-        ...rest,
-        createdBy: author.sub
-      })
-
-      return {
-        id: newFish._id,
-        createdAt: newFish.createdAt
-      };
-    } catch (error) {
-      this.logger.error("Created fish error: " + error.message, error.stack);
-      if (error?.code === 11000) {
-        throw new BadRequestException("Code already exists!");
+      const { color, size, origin, gallery, quantity, categoryDetail, ...rest } = createFishDto;
+      const categoryDetailExist = await this.categoryService.isCategoryDetailExist(categoryDetail, session);
+      if (!categoryDetailExist) {
+        throw new NotFoundException(`Category detail with id ${categoryDetail} not found!`);
       }
+      const [newFish] = await this.productModel.create(
+        [{ ...rest, categoryDetail, createdBy: author.sub }],
+        { session }
+      );
+
+      await this.fishService.create(newFish._id, color, size, origin, session);
+
+      await this.stockModel.create(
+        [{ product: newFish._id, quantity }],
+        { session }
+      );
+
+      if (gallery && gallery.length > 0) {
+        await this.galleryModel.insertMany(
+          gallery.map(img => ({ imageUrl: img, product: newFish._id })),
+          { session }
+        );
+      }
+      await session.commitTransaction();
+      return { id: newFish._id, createdAt: newFish.createdAt };
+    } catch (error) {
+      try {
+        await session.abortTransaction();
+      } catch { }
+      this.logger.error("Created fish error: " + error.message, error.stack);
+      if (error?.code === 11000) throw new BadRequestException("Code already exists!");
       if (error instanceof HttpException) throw error;
-      throw new InternalServerErrorException('Something went wrong!');
+      throw new InternalServerErrorException("Something went wrong!");
+    } finally {
+      session.endSession();
     }
   }
 

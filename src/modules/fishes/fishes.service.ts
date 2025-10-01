@@ -1,11 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { CreateFishDto } from './dto/create-fish.dto';
 import { UpdateFishDto } from './dto/update-fish.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Fish } from './schemas/fish.schema';
+import { ClientSession, Model, Types } from 'mongoose';
 
 @Injectable()
 export class FishesService {
-  create(createFishDto: CreateFishDto) {
-    return 'This action adds a new fish';
+  constructor(
+    @InjectModel(Fish.name) private fishModel: Model<Fish>,
+  ) { }
+
+  async create(productId: Types.ObjectId, color: string, size: string, origin: string, session: ClientSession) {
+    const [fish] = await this.fishModel.create(
+      [{ product: productId, color, size, origin }],
+      { session }
+    );
+    return fish;
   }
 
   findAll() {

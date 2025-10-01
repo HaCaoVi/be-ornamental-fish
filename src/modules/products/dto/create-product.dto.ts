@@ -7,8 +7,8 @@ import {
     IsMongoId,
     IsBoolean,
     IsArray,
-    ArrayNotEmpty,
 } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class CreateFishDto {
     @IsString({ message: 'name must be a string' })
@@ -41,7 +41,7 @@ export class CreateFishDto {
 
     @IsNotEmpty({ message: 'categoryDetail is required!' })
     @IsMongoId({ message: 'categoryDetail must be a valid ObjectId!' })
-    categoryDetail: string;
+    categoryDetail: Types.ObjectId;
 
     @IsString({ message: 'color must be a string' })
     @IsNotEmpty({ message: 'color is required' })
@@ -63,4 +63,8 @@ export class CreateFishDto {
     @IsArray()
     @IsString({ each: true })
     gallery: string[]
+
+    @IsNumber({}, { message: 'price must be a number' })
+    @Min(0, { message: 'price cannot be less than 0' })
+    quantity: number
 }
