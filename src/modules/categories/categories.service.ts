@@ -1,17 +1,21 @@
 import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { CreateCategoryDto } from './dto/create-category.dto';
+import { CreateCategoryDetailDto, CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './schemas/category.schema';
-import { Model } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { CategoryDetail, type CategoryDetailModelType } from './schemas/category-detail.schema';
+import { IToken } from '@common/interfaces/customize.interface';
+import { UpdateCategoryDetailDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
   private readonly logger = new Logger(CategoriesService.name);
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<Category>,
+    @InjectModel(CategoryDetail.name) private categoryDetailModel: CategoryDetailModelType,
   ) { }
 
-  async create(createCategoryDto: CreateCategoryDto) {
+  async createCategory(createCategoryDto: CreateCategoryDto) {
     try {
       return this.categoryModel.create({ ...createCategoryDto })
     } catch (error) {
@@ -21,7 +25,7 @@ export class CategoriesService {
     }
   }
 
-  async findAll(): Promise<Category[]> {
+  async findAllCategory(): Promise<Category[]> {
     try {
       const result = await this.categoryModel
         .find()
@@ -30,23 +34,88 @@ export class CategoriesService {
         .exec()
       return result
     } catch (error) {
-      this.logger.error("List role error: " + error.message, error.stack);
+      this.logger.error("List category error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
   }
 
-  async findOne(id: string): Promise<Category> {
+  async findOneCategory(id: string): Promise<Category> {
     try {
-      const role = await this.categoryModel
+      const category = await this.categoryModel
         .findById(id)
         .select("_id name")
         .lean<Category>()
         .exec();
-      if (!role) throw new NotFoundException(`Role with id ${id} not found`);
-      return role;
+      if (!category) throw new NotFoundException(`category with id ${id} not found`);
+      return category;
     } catch (error) {
-      this.logger.error("Get role error: " + error.message, error.stack);
+      this.logger.error("Get category error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
+  }
+
+  async isCategoryDetailExist(categoryDetailId: Types.ObjectId, session: ClientSession) {
+    return !!(await this.categoryDetailModel.exists({ _id: categoryDetailId }).session(session));
+  }
+
+  async createCategoryDetail(author: IToken, createCategoryDetailDto: CreateCategoryDetailDto) {
+    try {
+      const { category, name } = createCategoryDetailDto
+      const isCateExist = await this.categoryModel.exists({ _id: category });
+      if (!isCateExist) {
+        throw new NotFoundException(`Category with id ${category} not found!`);
+      }
+      const categoryDetail = await this.categoryDetailModel.create({ name, category, createdBy: author.sub })
+      return {
+        _id: categoryDetail._id,
+        createdAt: categoryDetail.createdAt
+      }
+    } catch (error) {
+      this.logger.error("Create category detail error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
+  }
+
+  async findAllCategoryDetail(categoryId: string): Promise<CategoryDetail[]> {
+    try {
+      const result = await this.categoryDetailModel
+        .find({ category: categoryId })
+        .select("_id name")
+        .lean<CategoryDetail[]>()
+        .exec()
+      return result
+    } catch (error) {
+      this.logger.error("List category detail error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
+  }
+
+  async updateCategoryDetail(author: IToken, id: string, updateCategoryDetailDto: UpdateCategoryDetailDto) {
+    try {
+      const updated = await this.categoryDetailModel.updateOne({ _id: id }, { ...updateCategoryDetailDto, updatedBy: author.sub });
+      if (updated.matchedCount === 0) {
+        throw new NotFoundException(`Category detail with id ${id} not found!`);
+      }
+      return {
+        matchedCount: updated.matchedCount,
+        modifiedCount: updated.modifiedCount
+      };
+    } catch (error) {
+      this.logger.error("Create category detail error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
+  }
+
+  async deleteCategoryDetail(id: string, createCategoryDetailDto: CreateCategoryDetailDto) {
+    try {
+      return this.categoryDetailModel.updateOne({ _id: id }, { ...createCategoryDetailDto })
+    } catch (error) {
+      this.logger.error("Create category detail error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }

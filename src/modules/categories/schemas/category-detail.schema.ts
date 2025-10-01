@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
 import { Category } from './category.schema';
+import { softDeletePlugin } from '@common/plugins/soft-delete.plugin';
+import { SoftDeleteModel } from '@common/interfaces/customize.interface';
 
 export type CategoryDetailDocument = HydratedDocument<CategoryDetail>;
 
@@ -33,3 +35,5 @@ export class CategoryDetail {
 
 export const CategoryDetailSchema = SchemaFactory.createForClass(CategoryDetail);
 CategoryDetailSchema.index({ category: 1 });
+CategoryDetailSchema.plugin(softDeletePlugin);
+export type CategoryDetailModelType = SoftDeleteModel<CategoryDetailDocument>;
