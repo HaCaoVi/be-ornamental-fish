@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDetailDto, CreateCategoryDto } from './dto/create-category.dto';
 import { Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
@@ -50,7 +50,17 @@ export class CategoriesController {
   updateCategoryDetail(
     @UserReq() user: IToken,
     @Param('id', ParseObjectIdPipe) id: string,
-    @Body() createCategoryDetailDto: CreateCategoryDetailDto) {
+    @Body() createCategoryDetailDto: CreateCategoryDetailDto
+  ) {
     return this.categoriesService.updateCategoryDetail(user, id, createCategoryDetailDto);
+  }
+
+  @Delete("update-category-detail/:id")
+  @ResponseMessage("Updated successfully")
+  deleteCategoryDetail(
+    @UserReq() user: IToken,
+    @Param('id', ParseObjectIdPipe) id: string,
+  ) {
+    return this.categoriesService.deleteCategoryDetail(user, id);
   }
 }

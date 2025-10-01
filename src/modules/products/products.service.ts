@@ -1,10 +1,10 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateFishDto } from './dto/create-product.dto';
 import { UpdateFishDto } from './dto/update-product.dto';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Product, type ProductModelType } from './schemas/product.schema';
 import type { IToken } from '@common/interfaces/customize.interface';
-import { Connection, Model } from 'mongoose';
+import { Connection, Model, Types } from 'mongoose';
 import { Stock } from './schemas/stock.schema';
 import { Gallery } from './schemas/gallery.schema';
 import { FishesService } from '@modules/fishes/fishes.service';
@@ -19,9 +19,13 @@ export class ProductsService {
     @InjectModel(Product.name) private productModel: ProductModelType,
     @InjectModel(Product.name) private galleryModel: Model<Gallery>,
     @InjectModel(Product.name) private stockModel: Model<Stock>,
+    @Inject(forwardRef(() => CategoriesService)) private categoryService: CategoriesService,
     private fishService: FishesService,
-    private categoryService: CategoriesService
   ) { }
+
+  async countProductHasCategoryDetailId(categoryDetailId: string) {
+    return this.productModel.countDocumentsSoftDelete({ categoryDetail: categoryDetailId });
+  }
 
   async createFish(author: IToken, createFishDto: CreateFishDto) {
     const session = await this.connection.startSession();

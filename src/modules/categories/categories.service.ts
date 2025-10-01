@@ -1,4 +1,4 @@
-import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDetailDto, CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './schemas/category.schema';
 import { ClientSession, Model, Types } from 'mongoose';
@@ -6,6 +6,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { CategoryDetail, type CategoryDetailModelType } from './schemas/category-detail.schema';
 import { IToken } from '@common/interfaces/customize.interface';
 import { UpdateCategoryDetailDto } from './dto/update-category.dto';
+import { ProductsService } from '@modules/products/products.service';
 
 @Injectable()
 export class CategoriesService {
@@ -13,6 +14,7 @@ export class CategoriesService {
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<Category>,
     @InjectModel(CategoryDetail.name) private categoryDetailModel: CategoryDetailModelType,
+    @Inject(forwardRef(() => ProductsService)) private productService: ProductsService
   ) { }
 
   async createCategory(createCategoryDto: CreateCategoryDto) {
@@ -105,17 +107,21 @@ export class CategoriesService {
         modifiedCount: updated.modifiedCount
       };
     } catch (error) {
-      this.logger.error("Create category detail error: " + error.message, error.stack);
+      this.logger.error("Update category detail error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
   }
 
-  async deleteCategoryDetail(id: string, createCategoryDetailDto: CreateCategoryDetailDto) {
+  async deleteCategoryDetail(author: IToken, id: string) {
     try {
-      return this.categoryDetailModel.updateOne({ _id: id }, { ...createCategoryDetailDto })
+      const productCount = await this.productService.countProductHasCategoryDetailId(id);
+      if (productCount > 0) {
+        throw new BadRequestException(`Have ${productCount} product(s) using category detail id ${id}`)
+      }
+      return this.categoryDetailModel.softDeleteOne({ _id: id }, author.sub.toString())
     } catch (error) {
-      this.logger.error("Create category detail error: " + error.message, error.stack);
+      this.logger.error("Delete category detail error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
