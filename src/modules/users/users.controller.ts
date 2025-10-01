@@ -5,6 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
 import type { IToken } from '@common/interfaces/customize.interface';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 @Controller('users')
 export class UsersController {
@@ -29,7 +30,7 @@ export class UsersController {
 
   @Public()
   @Get('get-user/:id')
-  findOne(@Param('id', ParseObjectIdPipe) id: string) {
+  findOne(@Param('id', ParseObjectIdPipe) id: Types.ObjectId) {
     return this.usersService.findOne(id);
   }
 
@@ -37,18 +38,17 @@ export class UsersController {
   @ResponseMessage("Updated user")
   update(
     @UserReq() user: IToken,
-    @Param('id', ParseObjectIdPipe) id: string,
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
     @Body() updateRoleDto: UpdateUserDto
   ) {
     return this.usersService.update(user, id, updateRoleDto);
   }
 
-
   @Delete('delete-user/:id')
   @ResponseMessage("Deleted user")
   remove(
     @UserReq() user: IToken,
-    @Param('id', ParseObjectIdPipe) id: string) {
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId) {
     return this.usersService.remove(user, id);
   }
 }

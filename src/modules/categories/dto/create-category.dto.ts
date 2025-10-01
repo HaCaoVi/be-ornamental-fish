@@ -1,4 +1,5 @@
 import { IsMongoId, IsNotEmpty, IsString } from "class-validator";
+import { Types } from "mongoose";
 
 export class CreateCategoryDto {
     @IsNotEmpty({ message: 'name is required!' })
@@ -12,5 +13,5 @@ export class CreateCategoryDetailDto {
 
     @IsNotEmpty({ message: 'category is required!' })
     @IsMongoId({ message: 'category must be a valid ObjectId!' })
-    category: string;
+    category: Types.ObjectId;
 }

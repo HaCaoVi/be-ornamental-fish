@@ -22,7 +22,6 @@ export class FilesService {
   }
 
   async uploadImage(file: Express.Multer.File, folderName: string, oldFileName: string) {
-    // const bucket = this.firebaseApp.storage().bucket();
     const filename = `files/images/${folderName}/${uuidv4()}-${Date.now()}-${file.originalname}`;
     const fileRef = this.bucket.file(filename);
 

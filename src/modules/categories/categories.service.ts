@@ -42,7 +42,7 @@ export class CategoriesService {
     }
   }
 
-  async findOneCategory(id: string): Promise<Category> {
+  async findOneCategory(id: Types.ObjectId): Promise<Category> {
     try {
       const category = await this.categoryModel
         .findById(id)
@@ -81,7 +81,7 @@ export class CategoriesService {
     }
   }
 
-  async findAllCategoryDetail(categoryId: string): Promise<CategoryDetail[]> {
+  async findAllCategoryDetail(categoryId: Types.ObjectId): Promise<CategoryDetail[]> {
     try {
       const result = await this.categoryDetailModel
         .find({ category: categoryId })
@@ -96,7 +96,7 @@ export class CategoriesService {
     }
   }
 
-  async updateCategoryDetail(author: IToken, id: string, updateCategoryDetailDto: UpdateCategoryDetailDto) {
+  async updateCategoryDetail(author: IToken, id: Types.ObjectId, updateCategoryDetailDto: UpdateCategoryDetailDto) {
     try {
       const updated = await this.categoryDetailModel.updateOne({ _id: id }, { ...updateCategoryDetailDto, updatedBy: author.sub });
       if (updated.matchedCount === 0) {
@@ -113,7 +113,7 @@ export class CategoriesService {
     }
   }
 
-  async deleteCategoryDetail(author: IToken, id: string) {
+  async deleteCategoryDetail(author: IToken, id: Types.ObjectId) {
     try {
       const productCount = await this.productService.countProductHasCategoryDetailId(id);
       if (productCount > 0) {

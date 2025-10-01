@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { UpdateFishDto } from './dto/update-fish.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Fish } from './schemas/fish.schema';
 import { ClientSession, Model, Types } from 'mongoose';
@@ -26,7 +25,7 @@ export class FishesService {
     return `This action returns a #${id} fish`;
   }
 
-  update(id: number, updateFishDto: UpdateFishDto) {
+  update(id: number) {
     return `This action updates a #${id} fish`;
   }
 

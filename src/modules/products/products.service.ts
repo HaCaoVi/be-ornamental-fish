@@ -23,7 +23,7 @@ export class ProductsService {
     private fishService: FishesService,
   ) { }
 
-  async countProductHasCategoryDetailId(categoryDetailId: string) {
+  async countProductHasCategoryDetailId(categoryDetailId: Types.ObjectId) {
     return this.productModel.countDocumentsSoftDelete({ categoryDetail: categoryDetailId });
   }
 
@@ -73,15 +73,15 @@ export class ProductsService {
     return `This action returns all products`;
   }
 
-  findOne(id: number) {
+  findOne(id: Types.ObjectId) {
     return `This action returns a #${id} product`;
   }
 
-  update(id: number, updateProductDto: UpdateFishDto) {
+  update(id: Types.ObjectId, updateProductDto: UpdateFishDto) {
     return `This action updates a #${id} product`;
   }
 
-  remove(id: number) {
+  remove(id: Types.ObjectId) {
     return `This action removes a #${id} product`;
   }
 }

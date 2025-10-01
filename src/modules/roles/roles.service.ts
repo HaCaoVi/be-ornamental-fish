@@ -29,7 +29,7 @@ export class RolesService {
     }
   }
 
-  async findOne(id: string): Promise<Role> {
+  async findOne(id: Types.ObjectId): Promise<Role> {
     try {
       const role = await this.roleModel
         .findById(id)

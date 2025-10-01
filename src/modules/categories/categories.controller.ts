@@ -4,6 +4,7 @@ import { CreateCategoryDetailDto, CreateCategoryDto } from './dto/create-categor
 import { Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import type { IToken } from '@common/interfaces/customize.interface';
+import { Types } from 'mongoose';
 
 @Controller('categories')
 export class CategoriesController {
@@ -24,7 +25,7 @@ export class CategoriesController {
 
   @Get('get-category/:id')
   @ResponseMessage("Get a category")
-  findOneCategory(@Param('id', ParseObjectIdPipe) id: string) {
+  findOneCategory(@Param('id', ParseObjectIdPipe) id: Types.ObjectId) {
     return this.categoriesService.findOneCategory(id);
   }
 
@@ -40,7 +41,7 @@ export class CategoriesController {
   @Get("list-category-detail/:categoryId")
   @ResponseMessage("Get list category")
   findAllCategoryDetail(
-    @Param('categoryId', ParseObjectIdPipe) categoryId: string
+    @Param('categoryId', ParseObjectIdPipe) categoryId: Types.ObjectId
   ) {
     return this.categoriesService.findAllCategoryDetail(categoryId);
   }
@@ -49,7 +50,7 @@ export class CategoriesController {
   @ResponseMessage("Updated successfully")
   updateCategoryDetail(
     @UserReq() user: IToken,
-    @Param('id', ParseObjectIdPipe) id: string,
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
     @Body() createCategoryDetailDto: CreateCategoryDetailDto
   ) {
     return this.categoriesService.updateCategoryDetail(user, id, createCategoryDetailDto);
@@ -59,7 +60,7 @@ export class CategoriesController {
   @ResponseMessage("Updated successfully")
   deleteCategoryDetail(
     @UserReq() user: IToken,
-    @Param('id', ParseObjectIdPipe) id: string,
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
   ) {
     return this.categoriesService.deleteCategoryDetail(user, id);
   }

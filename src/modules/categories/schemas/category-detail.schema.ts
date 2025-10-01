@@ -3,6 +3,7 @@ import mongoose, { HydratedDocument, Types } from 'mongoose';
 import { Category } from './category.schema';
 import { softDeletePlugin } from '@common/plugins/soft-delete.plugin';
 import { SoftDeleteModel } from '@common/interfaces/customize.interface';
+import { User } from '@modules/users/schemas/user.schema';
 
 export type CategoryDetailDocument = HydratedDocument<CategoryDetail>;
 
@@ -17,13 +18,13 @@ export class CategoryDetail {
     name: string;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    createdBy: Types.ObjectId;
+    createdBy: User;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    updatedBy: Types.ObjectId;
+    updatedBy: User;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    deletedBy: Types.ObjectId;
+    deletedBy: User;
 
     @Prop()
     deletedAt: Date;

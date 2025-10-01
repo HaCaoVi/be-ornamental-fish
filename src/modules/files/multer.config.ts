@@ -17,9 +17,6 @@ export class MulterConfigService implements MulterOptionsFactory {
     }
 
     createMulterOptions(): MulterModuleOptions {
-        const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-        const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
-
         return {
             storage: memoryStorage(),
             fileFilter: (req, file, callback) => {

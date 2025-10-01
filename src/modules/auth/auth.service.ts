@@ -6,8 +6,6 @@ import { compareHashBcrypt, hashTokenSHA256 } from '@common/helpers/security.hel
 import { JwtService } from '@nestjs/jwt';
 import { IToken } from '@common/interfaces/customize.interface';
 import { ConfigService } from '@nestjs/config';
-import ms from 'ms';
-import type { Response } from 'express';
 import { AccountType } from '@common/types/type';
 
 @Injectable()

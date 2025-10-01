@@ -98,7 +98,7 @@ export class UsersService {
     }
   }
 
-  async findOne(id: string): Promise<User> {
+  async findOne(id: Types.ObjectId): Promise<User> {
     try {
       const user = await this.userModel
         .findById(id)
@@ -119,7 +119,7 @@ export class UsersService {
     }
   }
 
-  async update(author: IToken, id: string, updateUserDto: UpdateUserDto) {
+  async update(author: IToken, id: Types.ObjectId, updateUserDto: UpdateUserDto) {
     try {
       const { name, isActivated, ...rest } = updateUserDto;
       const updated = await this.userModel.updateOne(
@@ -143,7 +143,7 @@ export class UsersService {
     }
   }
 
-  async remove(author: IToken, id: string) {
+  async remove(author: IToken, id: Types.ObjectId) {
     try {
       const deleted = await this.userModel.softDeleteOne(
         { _id: id, email: { $ne: this.configService.get<string>("ROOT_ADMIN_ACCOUNT") } }, author.sub.toString()

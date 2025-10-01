@@ -2,6 +2,7 @@ import { SoftDeleteModel } from '@common/interfaces/customize.interface';
 import { softDeletePlugin } from '@common/plugins/soft-delete.plugin';
 import { CategoryDetail } from '@modules/categories/schemas/category-detail.schema';
 import { Category } from '@modules/categories/schemas/category.schema';
+import { User } from '@modules/users/schemas/user.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
 
@@ -39,13 +40,13 @@ export class Product {
     categoryDetail: CategoryDetail;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    createdBy: Types.ObjectId;
+    createdBy: User;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    updatedBy: Types.ObjectId;
+    updatedBy: User;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    deletedBy: Types.ObjectId;
+    deletedBy: User;
 
     @Prop()
     deletedAt: Date;

@@ -60,16 +60,16 @@ export class User {
     isBanned: boolean;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    createdBy: Types.ObjectId;
+    createdBy: User;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    updatedBy: Types.ObjectId;
+    updatedBy: User;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    deletedBy: Types.ObjectId;
+    deletedBy: User;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    bannedBy: Types.ObjectId;
+    bannedBy: User;
 
     @Prop()
     deletedAt: Date;

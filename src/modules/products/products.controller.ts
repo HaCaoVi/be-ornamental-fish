@@ -4,6 +4,7 @@ import { CreateFishDto } from './dto/create-product.dto';
 import { UpdateFishDto } from './dto/update-product.dto';
 import { ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
 import type { IToken } from '@common/interfaces/customize.interface';
+import { Types } from 'mongoose';
 
 @Controller('products')
 export class ProductsController {
@@ -24,17 +25,17 @@ export class ProductsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productsService.findOne(+id);
+  findOne(@Param('id') id: Types.ObjectId) {
+    return this.productsService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFishDto: UpdateFishDto) {
-    return this.productsService.update(+id, updateFishDto);
+  update(@Param('id') id: Types.ObjectId, @Body() updateFishDto: UpdateFishDto) {
+    return this.productsService.update(id, updateFishDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(+id);
+  remove(@Param('id') id: Types.ObjectId) {
+    return this.productsService.remove(id);
   }
 }
