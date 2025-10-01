@@ -21,7 +21,6 @@ export class CategoriesService {
     }
   }
 
-
   async findAll(): Promise<Category[]> {
     try {
       const result = await this.categoryModel
