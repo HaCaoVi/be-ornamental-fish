@@ -11,6 +11,7 @@ import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
 import { Types } from 'mongoose';
 import { buildMeta } from '@common/helpers/customize.helper';
 import { ConfigService } from '@nestjs/config';
+import { RolesService } from '@modules/roles/roles.service';
 
 @Injectable()
 export class UsersService {
@@ -18,16 +19,21 @@ export class UsersService {
 
   constructor(
     @InjectModel(User.name) private userModel: UserModelType,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private roleService: RolesService
   ) { }
 
   async create(author: IToken, createUserDto: CreateUserDto) {
     try {
-      const { password, ...rest } = createUserDto
-
+      const { password, role, ...rest } = createUserDto
+      const roleExist = await this.roleService.isRoleExist(role);
+      if (!roleExist) {
+        throw new NotFoundException(`Role with id ${role} not found!`)
+      }
       const hashPass = await hashBcrypt(password);
       const newUser = await this.userModel.create({
         ...rest,
+        role,
         password: hashPass,
         accountType: AccountType.LOCAL,
         createdBy: author.sub
@@ -116,15 +122,15 @@ export class UsersService {
   async update(author: IToken, id: string, updateUserDto: UpdateUserDto) {
     try {
       const { name, isActivated, ...rest } = updateUserDto;
-
-      const user = await this.userModel.findById(id).lean().exec();
-      if (!user) throw new NotFoundException(`User with id ${id} not found`);
-      if (user.email === this.configService.get<string>("ROOT_ADMIN_ACCOUNT")) throw new BadRequestException("Can't update this user!")
-
-      const updated = await this.userModel.updateOne({ _id: id },
+      const updated = await this.userModel.updateOne(
+        { _id: id, email: { $ne: this.configService.get<string>("ROOT_ADMIN_ACCOUNT") } },
         { ...rest, name, isActivated, updatedBy: author.sub, bannedBy: rest.isBanned ? author.sub : null },
         { runValidators: true }
       );
+
+      if (updated.matchedCount === 0) {
+        throw new NotFoundException(`User with id ${id} not found or is protected`);
+      }
 
       return {
         matchedCount: updated.matchedCount,
@@ -139,10 +145,10 @@ export class UsersService {
 
   async remove(author: IToken, id: string) {
     try {
-      const result = await this.userModel.softDeleteOne(
+      const deleted = await this.userModel.softDeleteOne(
         { _id: id, email: { $ne: this.configService.get<string>("ROOT_ADMIN_ACCOUNT") } }, author.sub.toString()
       );
-      if (result.matchedCount === 0) {
+      if (deleted.matchedCount === 0) {
         throw new NotFoundException(`User with id ${id} not found or cannot be delete this user!`);
       }
       return {

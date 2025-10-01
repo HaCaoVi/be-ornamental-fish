@@ -1,7 +1,7 @@
 import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Role } from './schemas/role.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 @Injectable()
 export class RolesService {
@@ -10,6 +10,9 @@ export class RolesService {
     @InjectModel(Role.name) private roleModel: Model<Role>,
   ) { }
 
+  async isRoleExist(roleId: Types.ObjectId) {
+    return !!(await this.roleModel.exists({ _id: roleId }))
+  }
 
   async findAll(): Promise<Role[]> {
     try {
