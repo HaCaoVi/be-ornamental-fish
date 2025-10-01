@@ -2,9 +2,8 @@ import { BadRequestException, HttpException, Injectable, InternalServerErrorExce
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from './schemas/user.schema';
+import { User, type UserModelType } from './schemas/user.schema';
 import { hashBcrypt } from '@common/helpers/security.helper';
-import type { UserModelType } from '@modules/users/schemas/user.schema';
 import type { IToken, PaginatedResult } from '@common/interfaces/customize.interface';
 import { AccountType } from '@common/types/type';
 import { buildPopulateConfigFromStrings } from '@common/helpers/mongoose-populate.helper';

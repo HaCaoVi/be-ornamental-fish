@@ -15,6 +15,9 @@ export class Fish {
     color: string
 
     @Prop({ required: true })
+    origin: string
+
+    @Prop({ required: true })
     size: string
 }
 export const FishSchema = SchemaFactory.createForClass(Fish);

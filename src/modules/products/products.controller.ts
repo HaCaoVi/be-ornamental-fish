@@ -1,15 +1,21 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateFishDto } from './dto/create-product.dto';
+import { UpdateFishDto } from './dto/update-product.dto';
+import { ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
+import type { IToken } from '@common/interfaces/customize.interface';
 
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) { }
 
-  @Post()
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  @Post("create-fish")
+  @ResponseMessage("Created new fish")
+  create(
+    @UserReq() user: IToken,
+    @Body() createFishDto: CreateFishDto
+  ) {
+    return this.productsService.createFish(user, createFishDto);
   }
 
   @Get()
@@ -23,8 +29,8 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(+id, updateProductDto);
+  update(@Param('id') id: string, @Body() updateFishDto: UpdateFishDto) {
+    return this.productsService.update(+id, updateFishDto);
   }
 
   @Delete(':id')

@@ -1,5 +1,6 @@
 import { SoftDeleteModel } from '@common/interfaces/customize.interface';
 import { softDeletePlugin } from '@common/plugins/soft-delete.plugin';
+import { CategoryDetail } from '@modules/categories/schemas/category-detail.schema';
 import { Category } from '@modules/categories/schemas/category.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
@@ -13,7 +14,7 @@ export class Product {
     @Prop({ required: true })
     name: string;
 
-    @Prop({ required: true })
+    @Prop({ required: true, unique: true })
     code: string;
 
     @Prop({ required: true })
@@ -29,10 +30,13 @@ export class Product {
     mainImageUrl: string;
 
     @Prop({ default: null })
-    videoImageUrl: string;
+    mainVideoUrl: string;
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    category: Category;
+    @Prop({ default: false })
+    isActivated: boolean
+
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "CategoryDetail", required: true })
+    categoryDetail: CategoryDetail;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
     createdBy: Types.ObjectId;
@@ -52,7 +56,7 @@ export class Product {
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
-ProductSchema.index({ isDeleted: 1, category: 1 });
+ProductSchema.index({ isDeleted: 1, categoryDetail: 1 });
 ProductSchema.index({ name: "text", code: "text" });
 ProductSchema.plugin(softDeletePlugin);
 export type ProductModelType = SoftDeleteModel<ProductDocument>;

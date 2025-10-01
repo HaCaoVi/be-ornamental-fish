@@ -5,7 +5,7 @@ import { UpdateFishDto } from './dto/update-fish.dto';
 
 @Controller('fishes')
 export class FishesController {
-  constructor(private readonly fishesService: FishesService) {}
+  constructor(private readonly fishesService: FishesService) { }
 
   @Post()
   create(@Body() createFishDto: CreateFishDto) {
