@@ -41,13 +41,13 @@ export class User {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "Role" })
     role: Role;
 
-    @Prop({ default: null })
+    @Prop({ default: "" })
     refreshToken: string;
 
     @Prop({ default: false })
     isActivated: boolean;
 
-    @Prop({ default: null })
+    @Prop({ default: "" })
     codeActive: string
 
     @Prop({ default: null })

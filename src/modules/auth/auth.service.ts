@@ -1,5 +1,5 @@
 import { User } from '@modules/users/schemas/user.schema';
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { UserModelType } from '@modules/users/schemas/user.schema';
 import { compareHashBcrypt, hashTokenSHA256 } from '@common/helpers/security.helper';
@@ -117,8 +117,8 @@ export class AuthService {
                 { _id: dataToken.sub },
                 { $set: { refreshToken: hashTokenSHA256(newRefreshToken) } }
             );
-            if (updateRefreshToken.modifiedCount === 0) {
-                throw new InternalServerErrorException("Failed to update refresh token");
+            if (updateRefreshToken.matchedCount === 0) {
+                throw new NotFoundException("User not found");
             }
             return {
                 refresh_token: newRefreshToken,
@@ -126,6 +126,24 @@ export class AuthService {
             };
         } catch (error) {
             this.logger.error("Refresh token error: " + error.message, error.stack);
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Something went wrong!');
+        }
+    }
+
+    async logout(user: IToken) {
+        try {
+            const updated = await this.userModel.updateOne(
+                { _id: user.sub },
+                { $set: { refreshToken: "" } }
+            );
+
+            if (updated.matchedCount === 0) {
+                throw new NotFoundException("User not found");
+            }
+            return "oke"
+        } catch (error) {
+            this.logger.error("Logout error: " + error.message, error.stack);
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Something went wrong!');
         }

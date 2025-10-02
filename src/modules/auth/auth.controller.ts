@@ -28,10 +28,18 @@ export class AuthController {
 
     @Public()
     @Get('refresh')
-    @ResponseMessage("Refresh Successfully")
+    @ResponseMessage("Refresh successfully")
     refreshToken(
         @Cookies('refresh_token') refreshToken: string
     ) {
         return this.authService.refreshToken(refreshToken)
+    }
+
+    @Post('logout')
+    @ResponseMessage("Logout successfully")
+    logout(
+        @UserReq() user: IToken
+    ) {
+        return this.authService.logout(user)
     }
 }
