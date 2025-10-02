@@ -9,6 +9,7 @@ export const buildPopulateConfigFromStrings = (
     fieldsStr: string
 ): PopulateConfig[] => {
     if (!populateStr) return []
+    if (!fieldsStr) return []
 
     const paths = populateStr.split(",").map(p => p.trim());
     const fieldsList = fieldsStr ? fieldsStr.split(",").map(f => f.trim()) : [];

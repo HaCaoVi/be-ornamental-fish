@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, Query } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDetailDto, CreateCategoryDto } from './dto/create-category.dto';
 import { Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
@@ -41,9 +41,11 @@ export class CategoriesController {
   @Get("list-category-detail/:categoryId")
   @ResponseMessage("Get list category detail")
   findAllCategoryDetail(
-    @Param('categoryId', ParseObjectIdPipe) categoryId: Types.ObjectId
+    @Param('categoryId', ParseObjectIdPipe) categoryId: Types.ObjectId,
+    @Query() query: any
   ) {
-    return this.categoriesService.findAllCategoryDetail(categoryId);
+    const { current, pageSize, ...filters } = query;
+    return this.categoriesService.findAllCategoryDetail(categoryId, +current, +pageSize);
   }
 
   @Patch("update-category-detail/:id")

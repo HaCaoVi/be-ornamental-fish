@@ -4,9 +4,11 @@ import { Category } from './schemas/category.schema';
 import { ClientSession, Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { CategoryDetail, type CategoryDetailModelType } from './schemas/category-detail.schema';
-import { IToken } from '@common/interfaces/customize.interface';
+import { IToken, PaginatedResult } from '@common/interfaces/customize.interface';
 import { UpdateCategoryDetailDto } from './dto/update-category.dto';
 import { ProductsService } from '@modules/products/products.service';
+import { buildMeta } from '@common/helpers/customize.helper';
+import { buildPopulateConfigFromStrings } from '@common/helpers/mongoose-populate.helper';
 
 @Injectable()
 export class CategoriesService {
@@ -84,16 +86,48 @@ export class CategoriesService {
     }
   }
 
-  async findAllCategoryDetail(categoryId: Types.ObjectId): Promise<CategoryDetail[]> {
+  async findAllCategoryDetail(categoryId: Types.ObjectId, current: number, pageSize: number): Promise<PaginatedResult<CategoryDetail>> {
     try {
-      const result = await this.categoryDetailModel
-        .find({ category: categoryId })
-        .select("_id name")
-        .lean<CategoryDetail[]>()
-        .exec()
-      return result
+      if (!current) current = 1
+      if (!pageSize || pageSize > 50) pageSize = 10
+
+      const skip = (current - 1) * pageSize;
+
+      const [totalItems, result] = await Promise.all([
+        this.categoryDetailModel.countDocumentsSoftDelete({ category: categoryId }),
+        this.categoryDetailModel
+          .find({ category: categoryId })
+          .skip(skip)
+          .limit(pageSize)
+          .populate([
+            {
+              path: "createdBy",
+              select: "_id name email",
+              populate: {
+                path: "role",
+                select: "_id name"
+              }
+            },
+            {
+              path: "updatedBy",
+              select: "_id name email",
+              populate: {
+                path: "role",
+                select: "_id name"
+              }
+            }
+          ])
+          .sort("-createdAt")
+          .lean<CategoryDetail[]>()
+          .exec()
+      ]);
+
+      return {
+        meta: buildMeta(current, pageSize, totalItems),
+        result
+      };
     } catch (error) {
-      this.logger.error("List category detail error: " + error.message, error.stack);
+      this.logger.error("List user error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }

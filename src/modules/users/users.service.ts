@@ -58,8 +58,7 @@ export class UsersService {
       if (!current) current = 1
       if (!pageSize || pageSize > 50) pageSize = 10
 
-      const { sort, populate, fields, filters, search } = query
-      const populateConfig = buildPopulateConfigFromStrings(populate, fields)
+      const { sort, filters, search } = query
       const normalizedFilters = parseFilters(filters)
       const normalizedSort = normalizeSort(sort, ["createdAt", "updatedAt", "email", "name"]);
 
@@ -82,7 +81,10 @@ export class UsersService {
           .limit(pageSize)
           .sort(normalizedSort)
           .select("-password -refreshToken")
-          .populate(populateConfig)
+          .populate({
+            path: "role",
+            select: "_id name"
+          })
           .lean<User[]>()
           .exec()
       ]);
