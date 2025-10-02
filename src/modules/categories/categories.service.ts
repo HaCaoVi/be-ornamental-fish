@@ -76,6 +76,9 @@ export class CategoriesService {
       }
     } catch (error) {
       this.logger.error("Create category detail error: " + error.message, error.stack);
+      if (error?.code === 11000) {
+        throw new BadRequestException("Category detail name already exists!");
+      }
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
@@ -119,7 +122,14 @@ export class CategoriesService {
       if (productCount > 0) {
         throw new BadRequestException(`Have ${productCount} product(s) using category detail id ${id}`)
       }
-      return this.categoryDetailModel.softDeleteOne({ _id: id }, author.sub.toString())
+      const deleted = await this.categoryDetailModel.softDeleteOne({ _id: id }, author.sub.toString())
+      if (deleted.matchedCount === 0) {
+        throw new NotFoundException(`Category detail with id ${id} not found!`);
+      }
+      return {
+        success: true,
+        _id: id
+      }
     } catch (error) {
       this.logger.error("Delete category detail error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;

@@ -153,7 +153,7 @@ export class UsersService {
       }
       return {
         success: true,
-        id,
+        _id: id
       };
     } catch (error) {
       this.logger.error("Deleted user error: " + error.message, error.stack);

@@ -39,7 +39,7 @@ export class CategoriesController {
 
   @Public()
   @Get("list-category-detail/:categoryId")
-  @ResponseMessage("Get list category")
+  @ResponseMessage("Get list category detail")
   findAllCategoryDetail(
     @Param('categoryId', ParseObjectIdPipe) categoryId: Types.ObjectId
   ) {
@@ -56,8 +56,8 @@ export class CategoriesController {
     return this.categoriesService.updateCategoryDetail(user, id, createCategoryDetailDto);
   }
 
-  @Delete("update-category-detail/:id")
-  @ResponseMessage("Updated successfully")
+  @Delete("delete-category-detail/:id")
+  @ResponseMessage("Deleted successfully")
   deleteCategoryDetail(
     @UserReq() user: IToken,
     @Param('id', ParseObjectIdPipe) id: Types.ObjectId,

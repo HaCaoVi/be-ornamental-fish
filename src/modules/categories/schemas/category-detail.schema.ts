@@ -14,8 +14,11 @@ export class CategoryDetail {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true })
     category: Category;
 
-    @Prop({ required: true })
+    @Prop({ required: true, unique: true })
     name: string;
+
+    @Prop({ default: false })
+    isDeleted: boolean
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
     createdBy: User;
@@ -36,5 +39,6 @@ export class CategoryDetail {
 
 export const CategoryDetailSchema = SchemaFactory.createForClass(CategoryDetail);
 CategoryDetailSchema.index({ category: 1 });
+CategoryDetailSchema.index({ name: 1, isDeleted: 1 }, { unique: true });
 CategoryDetailSchema.plugin(softDeletePlugin);
 export type CategoryDetailModelType = SoftDeleteModel<CategoryDetailDocument>;
