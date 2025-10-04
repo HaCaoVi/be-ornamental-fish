@@ -7,6 +7,7 @@ import {
     IsMongoId,
     IsBoolean,
     IsArray,
+    IsUrl,
 } from 'class-validator';
 import { Types } from 'mongoose';
 
@@ -31,11 +32,13 @@ export class CreateFishDto {
     @Min(0, { message: 'Discount cannot be less than 0' })
     discount: number;
 
+    @IsUrl({}, { message: 'mainImageUrl must be a url' })
     @IsString({ message: 'mainImageUrl must be a string' })
     @IsNotEmpty({ message: 'mainImageUrl is required' })
     mainImageUrl: string;
 
     @IsOptional()
+    @IsUrl({}, { message: 'mainVideoUrl must be a url' })
     @IsString({ message: 'mainVideoUrl must be a string' })
     mainVideoUrl: string;
 
@@ -60,6 +63,7 @@ export class CreateFishDto {
     isActivated: boolean
 
     @IsOptional()
+    @IsUrl({}, { each: true, message: 'gallery must be a url' })
     @IsArray()
     @IsString({ each: true })
     gallery: string[]

@@ -17,8 +17,8 @@ export class ProductsService {
   constructor(
     @InjectConnection() private readonly connection: Connection,
     @InjectModel(Product.name) private productModel: ProductModelType,
-    @InjectModel(Product.name) private galleryModel: Model<Gallery>,
-    @InjectModel(Product.name) private stockModel: Model<Stock>,
+    @InjectModel(Gallery.name) private galleryModel: Model<Gallery>,
+    @InjectModel(Stock.name) private stockModel: Model<Stock>,
     @Inject(forwardRef(() => CategoriesService)) private categoryService: CategoriesService,
     private fishService: FishesService,
   ) { }
@@ -36,10 +36,22 @@ export class ProductsService {
       if (!categoryDetailExist) {
         throw new NotFoundException(`Category detail with id ${categoryDetail} not found!`);
       }
-      const [newFish] = await this.productModel.create(
-        [{ ...rest, categoryDetail, createdBy: author.sub }],
-        { session }
-      );
+      const fishDataSchemaOnly = {
+        name: createFishDto.name,
+        code: createFishDto.code,
+        description: createFishDto.description,
+        price: createFishDto.price,
+        discount: createFishDto.discount,
+        mainImageUrl: createFishDto.mainImageUrl,
+        mainVideoUrl: createFishDto.mainVideoUrl,
+        isActivated: createFishDto.isActivated,
+        categoryDetail: new Types.ObjectId(categoryDetail),
+        createdBy: new Types.ObjectId(author.sub),
+      };
+
+      const newFish = new this.productModel(fishDataSchemaOnly);
+      await newFish.save({ session });
+
 
       await this.fishService.create(newFish._id, color, size, origin, session);
 

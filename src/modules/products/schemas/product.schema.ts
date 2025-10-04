@@ -1,7 +1,6 @@
 import { SoftDeleteModel } from '@common/interfaces/customize.interface';
 import { softDeletePlugin } from '@common/plugins/soft-delete.plugin';
 import { CategoryDetail } from '@modules/categories/schemas/category-detail.schema';
-import { Category } from '@modules/categories/schemas/category.schema';
 import { User } from '@modules/users/schemas/user.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
