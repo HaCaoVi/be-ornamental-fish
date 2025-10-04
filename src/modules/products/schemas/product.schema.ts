@@ -38,6 +38,9 @@ export class Product {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "CategoryDetail", required: true })
     categoryDetail: CategoryDetail;
 
+    @Prop({ default: false })
+    isDeleted: boolean
+
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
     createdBy: User;
 

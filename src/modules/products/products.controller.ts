@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateFishDto } from './dto/create-product.dto';
 import { UpdateFishDto } from './dto/update-product.dto';
@@ -14,16 +14,19 @@ export class ProductsController {
   @Post("create-fish")
   @Roles(ERole.ADMIN, ERole.STAFF)
   @ResponseMessage("Created new fish")
-  create(
+  createFish(
     @UserReq() user: IToken,
     @Body() createFishDto: CreateFishDto
   ) {
     return this.productsService.createFish(user, createFishDto);
   }
 
-  @Get()
-  findAll() {
-    return this.productsService.findAll();
+  @Get("list-product")
+  findAll(
+    @Query() query: any
+  ) {
+    const { current, pageSize, ...filters } = query;
+    return this.productsService.findAll(+current, +pageSize, filters);
   }
 
   @Get(':id')
