@@ -11,7 +11,6 @@ import { FishesService } from '@modules/fishes/fishes.service';
 import { CategoriesService } from '@modules/categories/categories.service';
 import { buildMeta } from '@common/helpers/customize.helper';
 import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
-import { pipeline } from 'stream';
 
 @Injectable()
 export class ProductsService {
@@ -162,8 +161,65 @@ export class ProductsService {
     }
   }
 
-  findOne(id: Types.ObjectId) {
-    return `This action returns a #${id} product`;
+  async findOne(productId: Types.ObjectId) {
+    try {
+      const pipeline: any[] = [
+        { $match: { _id: new Types.ObjectId(productId), isDeleted: false } },
+        {
+          $lookup: {
+            from: "categorydetails",
+            localField: "categoryDetail",
+            foreignField: "_id",
+            pipeline: [
+              { $project: { _id: 1, name: 1, category: 1 } }
+            ],
+            as: "categoryDetail"
+          }
+        },
+        { $unwind: "$categoryDetail" },
+        {
+          $lookup: {
+            from: "stocks",
+            localField: "_id",
+            foreignField: "product",
+            as: "stock"
+          }
+        },
+        { $unwind: { path: "$stock", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "fish",
+            localField: "_id",
+            foreignField: "product",
+            as: "fish"
+          }
+        },
+        {
+          $lookup: {
+            from: "food",
+            localField: "_id",
+            foreignField: "product",
+            as: "food"
+          }
+        },
+
+        // Lookup gallery
+        {
+          $lookup: {
+            from: "gallery",
+            localField: "_id",
+            foreignField: "product",
+            as: "gallery"
+          }
+        }
+      ];
+
+      const [product] = await this.productModel.aggregate(pipeline).exec();
+      return product || null;
+    } catch (error) {
+      this.logger.error("Get product detail error: " + error.message, error.stack);
+      throw new InternalServerErrorException("Something went wrong!");
+    }
   }
 
   update(id: Types.ObjectId, updateProductDto: UpdateFishDto) {

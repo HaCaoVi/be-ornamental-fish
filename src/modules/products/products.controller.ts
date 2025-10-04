@@ -6,6 +6,7 @@ import { ResponseMessage, Roles, UserReq } from '@common/decorators/customize.de
 import type { IToken } from '@common/interfaces/customize.interface';
 import { Types } from 'mongoose';
 import { ERole } from '@common/types/type';
+import { ParseObjectIdPipe } from '@nestjs/mongoose';
 
 @Controller('products')
 export class ProductsController {
@@ -29,8 +30,10 @@ export class ProductsController {
     return this.productsService.findAll(+current, +pageSize, filters);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: Types.ObjectId) {
+  @Get('get-product/:id')
+  findOne(
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId
+  ) {
     return this.productsService.findOne(id);
   }
 
