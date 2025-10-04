@@ -8,7 +8,7 @@ import { IToken, PaginatedResult } from '@common/interfaces/customize.interface'
 import { UpdateCategoryDetailDto } from './dto/update-category.dto';
 import { ProductsService } from '@modules/products/products.service';
 import { buildMeta } from '@common/helpers/customize.helper';
-import { buildPopulateConfigFromStrings } from '@common/helpers/mongoose-populate.helper';
+import { parseFilters } from '@common/helpers/convert.helper';
 
 @Injectable()
 export class CategoriesService {
@@ -86,20 +86,34 @@ export class CategoriesService {
     }
   }
 
-  async findAllCategoryDetail(categoryId: Types.ObjectId, current: number, pageSize: number): Promise<PaginatedResult<CategoryDetail>> {
+  async findAllCategoryDetail(current: number, pageSize: number, query: any): Promise<PaginatedResult<CategoryDetail>> {
     try {
       if (!current) current = 1
       if (!pageSize || pageSize > 50) pageSize = 10
+      const { filters, search } = query
 
+      const normalizedFilters = parseFilters(filters)
       const skip = (current - 1) * pageSize;
 
+      if (search) {
+        const regex = new RegExp(search, "i");
+        normalizedFilters.$or = [
+          Types.ObjectId.isValid(search) ? { _id: new Types.ObjectId(search + '') } : null,
+          { name: regex },
+        ].filter(Boolean);
+      }
+
       const [totalItems, result] = await Promise.all([
-        this.categoryDetailModel.countDocumentsSoftDelete({ category: categoryId }),
+        this.categoryDetailModel.countDocumentsSoftDelete(normalizedFilters),
         this.categoryDetailModel
-          .find({ category: categoryId })
+          .find(normalizedFilters)
           .skip(skip)
           .limit(pageSize)
           .populate([
+            {
+              path: "category",
+              select: "_id name",
+            },
             {
               path: "createdBy",
               select: "_id name email",
@@ -127,7 +141,7 @@ export class CategoriesService {
         result
       };
     } catch (error) {
-      this.logger.error("List user error: " + error.message, error.stack);
+      this.logger.error("List category detail error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }

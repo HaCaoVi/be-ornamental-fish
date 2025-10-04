@@ -38,14 +38,13 @@ export class CategoriesController {
   }
 
   @Public()
-  @Get("list-category-detail/:categoryId")
+  @Get("list-category-detail")
   @ResponseMessage("Get list category detail")
   findAllCategoryDetail(
-    @Param('categoryId', ParseObjectIdPipe) categoryId: Types.ObjectId,
     @Query() query: any
   ) {
     const { current, pageSize, ...filters } = query;
-    return this.categoriesService.findAllCategoryDetail(categoryId, +current, +pageSize);
+    return this.categoriesService.findAllCategoryDetail(+current, +pageSize, filters);
   }
 
   @Patch("update-category-detail/:id")
