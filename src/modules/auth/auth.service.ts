@@ -6,7 +6,7 @@ import { compareHashBcrypt, hashTokenSHA256 } from '@common/helpers/security.hel
 import { JwtService } from '@nestjs/jwt';
 import { IToken } from '@common/interfaces/customize.interface';
 import { ConfigService } from '@nestjs/config';
-import { AccountType } from '@common/types/type';
+import { EAccountType } from '@common/types/type';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +34,7 @@ export class AuthService {
 
     async findUserByUsername(username: string): Promise<User | null> {
         const user = await this.userModel
-            .findOne({ email: username, accountType: AccountType.LOCAL })
+            .findOne({ email: username, accountType: EAccountType.LOCAL })
             .populate({
                 path: "role",
                 select: "_id name"

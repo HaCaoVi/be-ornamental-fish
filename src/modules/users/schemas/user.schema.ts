@@ -1,7 +1,7 @@
 
 import { SoftDeleteModel } from '@common/interfaces/customize.interface';
 import { softDeletePlugin } from '@common/plugins/soft-delete.plugin';
-import { AccountType, Gender } from '@common/types/type';
+import { EAccountType, EGender } from '@common/types/type';
 import { Role } from '@modules/roles/schemas/role.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
@@ -21,11 +21,14 @@ export class User {
     @Prop({ required: true })
     password: string;
 
+    @Prop({ default: "" })
+    avatar: string;
+
     @Prop()
     birthday: Date;
 
     @Prop({
-        enum: Gender,
+        enum: EGender,
     })
     gender: string;
 
@@ -33,8 +36,8 @@ export class User {
     address: string;
 
     @Prop({
-        default: AccountType.LOCAL,
-        enum: AccountType,
+        default: EAccountType.LOCAL,
+        enum: EAccountType,
     })
     accountType: string
 

@@ -10,9 +10,6 @@ export class Role {
     @Prop({ required: true })
     name: string;
 
-    @Prop({ required: true })
-    description: string;
-
     @Prop()
     createdAt: Date;
 

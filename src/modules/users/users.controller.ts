@@ -2,16 +2,18 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
+import { Public, ResponseMessage, Roles, UserReq } from '@common/decorators/customize.decorator';
 import type { IToken } from '@common/interfaces/customize.interface';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
+import { ERole } from '@common/types/type';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Post("create-user")
+  @Roles(ERole.ADMIN)
   @ResponseMessage("Created new user")
   create(
     @UserReq() user: IToken,
@@ -35,6 +37,7 @@ export class UsersController {
   }
 
   @Patch('update-user/:id')
+  @Roles(ERole.ADMIN)
   @ResponseMessage("Updated user")
   update(
     @UserReq() user: IToken,
@@ -45,6 +48,7 @@ export class UsersController {
   }
 
   @Delete('delete-user/:id')
+  @Roles(ERole.ADMIN)
   @ResponseMessage("Deleted user")
   remove(
     @UserReq() user: IToken,

@@ -3,8 +3,9 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { TransformInterceptor } from '@common/interceptors/transform.interceptor';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
-import { JwtAuthGuard } from '@modules/auth/passport/jwt-auth.guard';
+import { JwtAuthGuard } from '@modules/auth/jwt/jwt-auth.guard';
 import cookieParser from 'cookie-parser';
+import { RolesGuard } from '@modules/auth/roles.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +22,8 @@ async function bootstrap() {
   }));
   //config auth route with jwt 
   app.useGlobalGuards(new JwtAuthGuard(reflector));
+  //config auth route with role 
+  app.useGlobalGuards(new RolesGuard(reflector));
   //config cookie
   app.use(cookieParser());
   //config version api

@@ -1,7 +1,7 @@
 import { IsBoolean, IsDate, IsEmail, IsEnum, IsMongoId, IsNotEmpty, IsOptional, Length } from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsPastDate } from '@common/decorators/validate.decorator';
-import { Gender } from '@common/types/type';
+import { EGender } from '@common/types/type';
 import { Types } from 'mongoose';
 
 export class CreateUserDto {
@@ -23,8 +23,8 @@ export class CreateUserDto {
     birthday: Date;
 
     @IsNotEmpty({ message: 'gender is required!' })
-    @IsEnum(Gender, { message: 'gender must be MALE, FEMALE, or OTHER' })
-    gender: Gender;
+    @IsEnum(EGender, { message: 'gender must be MALE, FEMALE, or OTHER' })
+    gender: EGender;
 
     @IsNotEmpty({ message: 'address is required!' })
     address: string;

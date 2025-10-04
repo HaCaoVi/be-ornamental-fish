@@ -5,7 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, type UserModelType } from './schemas/user.schema';
 import { hashBcrypt } from '@common/helpers/security.helper';
 import type { IToken, PaginatedResult } from '@common/interfaces/customize.interface';
-import { AccountType } from '@common/types/type';
+import { EAccountType } from '@common/types/type';
 import { buildPopulateConfigFromStrings } from '@common/helpers/mongoose-populate.helper';
 import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
 import { Types } from 'mongoose';
@@ -35,7 +35,7 @@ export class UsersService {
         ...rest,
         role,
         password: hashPass,
-        accountType: AccountType.LOCAL,
+        accountType: EAccountType.LOCAL,
         createdBy: author.sub
       })
 

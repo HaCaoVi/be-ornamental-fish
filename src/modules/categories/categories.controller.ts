@@ -1,16 +1,18 @@
 import { Controller, Get, Post, Body, Param, Patch, Delete, Query } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDetailDto, CreateCategoryDto } from './dto/create-category.dto';
-import { Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
+import { Public, ResponseMessage, Roles, UserReq } from '@common/decorators/customize.decorator';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import type { IToken } from '@common/interfaces/customize.interface';
 import { Types } from 'mongoose';
+import { ERole } from '@common/types/type';
 
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) { }
 
   @Post("create-category")
+  @Roles(ERole.ADMIN)
   @ResponseMessage("Created successfully")
   createCategory(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.createCategory(createCategoryDto);
@@ -30,6 +32,7 @@ export class CategoriesController {
   }
 
   @Post("create-category-detail")
+  @Roles(ERole.ADMIN, ERole.STAFF)
   @ResponseMessage("Created successfully")
   createCategoryDetail(
     @UserReq() user: IToken,
@@ -48,6 +51,7 @@ export class CategoriesController {
   }
 
   @Patch("update-category-detail/:id")
+  @Roles(ERole.ADMIN)
   @ResponseMessage("Updated successfully")
   updateCategoryDetail(
     @UserReq() user: IToken,
@@ -58,6 +62,7 @@ export class CategoriesController {
   }
 
   @Delete("delete-category-detail/:id")
+  @Roles(ERole.ADMIN)
   @ResponseMessage("Deleted successfully")
   deleteCategoryDetail(
     @UserReq() user: IToken,
