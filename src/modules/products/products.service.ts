@@ -38,22 +38,8 @@ export class ProductsService {
       if (!categoryDetailExist) {
         throw new NotFoundException(`Category detail with id ${categoryDetail} not found!`);
       }
-      const fishDataSchemaOnly = {
-        name: createFishDto.name,
-        code: createFishDto.code,
-        description: createFishDto.description,
-        price: createFishDto.price,
-        discount: createFishDto.discount,
-        mainImageUrl: createFishDto.mainImageUrl,
-        mainVideoUrl: createFishDto.mainVideoUrl,
-        isActivated: createFishDto.isActivated,
-        categoryDetail: new Types.ObjectId(categoryDetail),
-        createdBy: new Types.ObjectId(author.sub),
-      };
 
-      const newFish = new this.productModel(fishDataSchemaOnly);
-      await newFish.save({ session });
-
+      const [newFish] = await this.productModel.create([{ ...rest, categoryDetail, createdBy: author.sub }], { session });
 
       await this.fishService.create(newFish._id, color, size, origin, session);
 
@@ -202,8 +188,6 @@ export class ProductsService {
             as: "food"
           }
         },
-
-        // Lookup gallery
         {
           $lookup: {
             from: "gallery",
@@ -222,11 +206,64 @@ export class ProductsService {
     }
   }
 
-  update(id: Types.ObjectId, updateProductDto: UpdateFishDto) {
-    return `This action updates a #${id} product`;
+  async update(author: IToken, productId: Types.ObjectId, updateFishDto: UpdateFishDto) {
+    const session = await this.connection.startSession();
+    session.startTransaction();
+    try {
+      const { color, size, origin, categoryDetail, ...rest } = updateFishDto;
+
+      if (categoryDetail) {
+        const exist = await this.categoryService.isCategoryDetailExist(categoryDetail, session);
+        if (!exist) {
+          throw new NotFoundException(`Category detail with id ${categoryDetail} not found!`);
+        }
+      }
+      const updated = await this.productModel.updateOne(
+        { _id: productId },
+        { ...rest, updatedBy: author.sub },
+        { runValidators: true, session }
+      );
+
+      if (color || size || origin) {
+        await this.fishService.update(productId, color, size, origin, session);
+      }
+
+      if (updated.matchedCount === 0) {
+        throw new NotFoundException(`Fish with id ${productId} not found`);
+      }
+      await session.commitTransaction();
+
+      return {
+        matchedCount: updated.matchedCount,
+        modifiedCount: updated.modifiedCount
+      };
+    } catch (error) {
+      try {
+        await session.abortTransaction();
+      } catch { }
+      this.logger.error("Updated fish error: " + error.message, error.stack);
+      if (error?.code === 11000) throw new BadRequestException("Code already exists!");
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    } finally {
+      session.endSession();
+    }
   }
 
-  remove(id: Types.ObjectId) {
-    return `This action removes a #${id} product`;
+  async removeProduct(author: IToken, id: Types.ObjectId) {
+    try {
+      const deleted = await this.productModel.softDeleteOne({ _id: id }, author.sub.toString())
+      if (deleted.matchedCount === 0) {
+        throw new NotFoundException(`Product with id ${id} not found!`);
+      }
+      return {
+        success: true,
+        _id: id
+      }
+    } catch (error) {
+      this.logger.error("Delete product error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
   }
 }

@@ -37,13 +37,21 @@ export class ProductsController {
     return this.productsService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: Types.ObjectId, @Body() updateFishDto: UpdateFishDto) {
-    return this.productsService.update(id, updateFishDto);
+  @Patch('update-fish/:id')
+  @Roles(ERole.ADMIN, ERole.STAFF)
+  update(
+    @UserReq() user: IToken,
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
+    @Body() updateFishDto: UpdateFishDto) {
+    return this.productsService.update(user, id, updateFishDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: Types.ObjectId) {
-    return this.productsService.remove(id);
+  @Delete('delete-product/:id')
+  @Roles(ERole.ADMIN)
+  removeProduct(
+    @UserReq() user: IToken,
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
+  ) {
+    return this.productsService.removeProduct(user, id);
   }
 }

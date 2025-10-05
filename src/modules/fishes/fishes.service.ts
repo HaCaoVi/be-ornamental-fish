@@ -17,16 +17,8 @@ export class FishesService {
     return fish;
   }
 
-  findAll() {
-    return `This action returns all fishes`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} fish`;
-  }
-
-  update(id: number) {
-    return `This action updates a #${id} fish`;
+  async update(productId: Types.ObjectId, color?: string, size?: string, origin?: string, session?: ClientSession) {
+    return this.fishModel.updateOne({ product: productId }, { color, size, origin }, { runValidators: true, session })
   }
 
   remove(id: number) {
