@@ -13,7 +13,7 @@ export class FileSizeInterceptor implements NestInterceptor {
         const req = context.switchToHttp().getRequest();
 
         const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-        const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+        const MAX_VIDEO_SIZE = 25 * 1024 * 1024; // 50MB
 
         const file = req.file;
 

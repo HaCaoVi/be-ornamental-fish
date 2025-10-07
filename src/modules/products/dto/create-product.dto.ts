@@ -1,3 +1,4 @@
+import { IsDiscountValid } from '@common/decorators/validate.decorator';
 import {
     IsString,
     IsNotEmpty,
@@ -8,6 +9,7 @@ import {
     IsBoolean,
     IsArray,
     IsUrl,
+    Validate,
 } from 'class-validator';
 import { Types } from 'mongoose';
 
@@ -30,6 +32,7 @@ export class CreateFishDto {
 
     @IsNumber({}, { message: 'Discount must be a number' })
     @Min(0, { message: 'Discount cannot be less than 0' })
+    @Validate(IsDiscountValid)
     discount: number;
 
     @IsUrl({}, { message: 'mainImageUrl must be a url' })

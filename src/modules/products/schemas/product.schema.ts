@@ -60,6 +60,7 @@ export class Product {
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 ProductSchema.index({ isDeleted: 1, categoryDetail: 1 });
-ProductSchema.index({ name: "text", code: "text" });
+ProductSchema.index({ name: "text" });
+ProductSchema.index({ code: 1, isDeleted: 1 });
 ProductSchema.plugin(softDeletePlugin);
 export type ProductModelType = SoftDeleteModel<ProductDocument>;

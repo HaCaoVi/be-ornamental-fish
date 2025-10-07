@@ -131,7 +131,7 @@ export class CategoriesService {
               }
             }
           ])
-          .sort("-createdAt")
+          .sort("createdAt")
           .lean<CategoryDetail[]>()
           .exec()
       ]);

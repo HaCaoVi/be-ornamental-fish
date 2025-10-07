@@ -21,16 +21,13 @@ export class FilesService {
     }
   }
 
-  async uploadImage(file: Express.Multer.File, folderName: string, oldFileName: string[]) {
+  async uploadImage(file: Express.Multer.File, folderName: string, oldFileName: string) {
     const filename = `files/images/${folderName}/${uuidv4()}-${Date.now()}-${file.originalname}`;
     const fileRef = this.bucket.file(filename);
 
     if (oldFileName && oldFileName.length > 0) {
-      for (const e of oldFileName) {
-        this.deleteFile(e)
-      }
+      this.deleteFile(oldFileName)
     }
-
 
     await fileRef.save(file.buffer, {
       contentType: file.mimetype,
@@ -47,7 +44,7 @@ export class FilesService {
     const filename = `files/videos/${folderName}/${uuidv4()}-${Date.now()}-${file.originalname}`;
     const fileRef = this.bucket.file(filename);
 
-    if (oldFileName || oldFileName.length > 0) {
+    if (oldFileName && oldFileName.length > 0) {
       this.deleteFile(oldFileName)
     }
 

@@ -70,36 +70,47 @@ export class ProductsService {
   }
 
   async findAll(
-    current: number,
-    pageSize: number,
+    current = 1,
+    pageSize = 10,
     query: Record<string, any> = {}
   ): Promise<PaginatedResult<Product>> {
     try {
-      if (!current) current = 1;
-      if (!pageSize || pageSize > 50) pageSize = 10;
-
-      const { sort, filters, search, categoryId } = query;
+      const { sort, filters, search, category } = query;
       const normalizedFilters = parseFilters(filters);
-      const normalizedSort = normalizeSort(sort, ["createdAt", "updatedAt", "name"]);
+      const normalizedSort = normalizeSort(sort, ["createdAt", "updatedAt", "name", "price", "discount"]);
 
       const skip = (current - 1) * pageSize;
+      const pipeline: any[] = [];
 
-      const pipeline: any[] = [
-        { $match: { isDeleted: false, ...normalizedFilters } },
+      let baseMatch: any = { isDeleted: false, ...normalizedFilters };
+      if (search) {
+        const isCodeSearch = /^[A-Z0-9-]+$/.test(search.trim());
+        if (isCodeSearch) {
+          baseMatch.code = { $regex: `^${search}`, $options: "i" };
+        } else {
+          pipeline.push({ $match: { $text: { $search: search } } });
+        }
+      }
 
+      if (!pipeline.length) pipeline.push({ $match: baseMatch });
+      else pipeline.push({ $match: baseMatch }); // combine filters with text search results
+
+      const countPipeline = [...pipeline, { $count: "total" }];
+      const countResult = await this.productModel.aggregate(countPipeline).exec();
+      const totalItems = countResult[0]?.total || 0;
+
+      pipeline.push(
         {
           $lookup: {
             from: "categorydetails",
             let: { categoryDetailId: "$categoryDetail" },
             pipeline: [
               { $match: { $expr: { $eq: ["$_id", "$$categoryDetailId"] } } },
-              ...(categoryId
-                ? [{ $match: { category: new Types.ObjectId(categoryId + "") } }]
-                : []),
-              { $project: { _id: 1, name: 1, category: 1 } }
+              ...(category ? [{ $match: { category: new Types.ObjectId(category + "") } }] : []),
+              { $project: { _id: 1, name: 1, category: 1 } },
             ],
-            as: "categoryDetail"
-          }
+            as: "categoryDetail",
+          },
         },
         { $unwind: "$categoryDetail" },
         {
@@ -107,30 +118,15 @@ export class ProductsService {
             from: "stocks",
             localField: "_id",
             foreignField: "product",
-            pipeline: [
-              {
-                $project: { _id: 1, quantity: 1, sold: 1 },
-              }
-            ],
-            as: "stock"
-          }
+            pipeline: [{ $project: { _id: 1, quantity: 1, sold: 1 } }],
+            as: "stock",
+          },
         },
-        { $unwind: { path: "$stock", preserveNullAndEmptyArrays: true } } // nếu chưa có stock vẫn trả về product
-      ];
+        { $unwind: { path: "$stock", preserveNullAndEmptyArrays: true } }
+      );
 
-      if (search) {
-        pipeline.push({
-          $match: { $text: { $search: search } }
-        });
-      }
-
-      if (normalizedSort && Object.keys(normalizedSort).length > 0) {
+      if (normalizedSort && Object.keys(normalizedSort).length > 0)
         pipeline.push({ $sort: normalizedSort });
-      }
-
-      const countPipeline = [...pipeline, { $count: "total" }];
-      const countResult = await this.productModel.aggregate(countPipeline).exec();
-      const totalItems = countResult[0]?.total || 0;
 
       pipeline.push({ $skip: skip }, { $limit: pageSize });
 
@@ -138,7 +134,7 @@ export class ProductsService {
 
       return {
         meta: buildMeta(current, pageSize, totalItems),
-        result
+        result,
       };
     } catch (error) {
       this.logger.error("List product error: " + error.message, error.stack);
