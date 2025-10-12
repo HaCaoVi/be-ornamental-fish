@@ -168,7 +168,7 @@ export class CategoriesService {
     try {
       const productCount = await this.productService.countProductHasCategoryDetailId(id);
       if (productCount > 0) {
-        throw new BadRequestException(`Have ${productCount} product(s) using category detail id ${id}`)
+        throw new BadRequestException(`Have ${productCount} product(s) using this category!`)
       }
       const deleted = await this.categoryDetailModel.softDeleteOne({ _id: id }, author.sub.toString())
       if (deleted.matchedCount === 0) {

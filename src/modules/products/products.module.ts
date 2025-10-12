@@ -7,6 +7,7 @@ import { Gallery, GallerySchema } from './schemas/gallery.schema';
 import { Stock, StockSchema } from './schemas/stock.schema';
 import { FishesModule } from '@modules/fishes/fishes.module';
 import { CategoriesModule } from '@modules/categories/categories.module';
+import { FoodsModule } from '@modules/foods/foods.module';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { CategoriesModule } from '@modules/categories/categories.module';
     MongooseModule.forFeature([{ name: Gallery.name, schema: GallerySchema }]),
     MongooseModule.forFeature([{ name: Stock.name, schema: StockSchema }]),
     FishesModule,
-    forwardRef(() => CategoriesModule)
+    forwardRef(() => CategoriesModule),
+    FoodsModule
   ],
   controllers: [ProductsController],
   providers: [ProductsService],

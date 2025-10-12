@@ -10,6 +10,7 @@ import { FilesModule } from '@modules/files/files.module';
 import { CategoriesModule } from '@modules/categories/categories.module';
 import { ProductsModule } from '@modules/products/products.module';
 import { FishesModule } from '@modules/fishes/fishes.module';
+import { FoodsModule } from '@modules/foods/foods.module';
 
 @Module({
   imports: [
@@ -30,7 +31,8 @@ import { FishesModule } from '@modules/fishes/fishes.module';
     FilesModule,
     CategoriesModule,
     ProductsModule,
-    FishesModule
+    FishesModule,
+    FoodsModule
   ],
   controllers: [AppController],
   providers: [AppService],

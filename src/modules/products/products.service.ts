@@ -1,5 +1,5 @@
 import { BadRequestException, forwardRef, HttpException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { CreateFishDto } from './dto/create-product.dto';
+import { CreateFishDto, CreateFoodDto } from './dto/create-product.dto';
 import { UpdateFishDto } from './dto/update-product.dto';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Product, type ProductModelType } from './schemas/product.schema';
@@ -11,6 +11,7 @@ import { FishesService } from '@modules/fishes/fishes.service';
 import { CategoriesService } from '@modules/categories/categories.service';
 import { buildMeta } from '@common/helpers/customize.helper';
 import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
+import { FoodsService } from '@modules/foods/foods.service';
 
 @Injectable()
 export class ProductsService {
@@ -23,6 +24,7 @@ export class ProductsService {
     @InjectModel(Stock.name) private stockModel: Model<Stock>,
     @Inject(forwardRef(() => CategoriesService)) private categoryService: CategoriesService,
     private fishService: FishesService,
+    private foodService: FoodsService,
   ) { }
 
   async countProductHasCategoryDetailId(categoryDetailId: Types.ObjectId) {
@@ -260,6 +262,46 @@ export class ProductsService {
       this.logger.error("Delete product error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
+    }
+  }
+
+  async createFood(author: IToken, createFoodDto: CreateFoodDto) {
+    const session = await this.connection.startSession();
+    session.startTransaction();
+    try {
+      const { weight, pelletSize, gallery, quantity, categoryDetail, ...rest } = createFoodDto;
+      const categoryDetailExist = await this.categoryService.isCategoryDetailExist(categoryDetail, session);
+      if (!categoryDetailExist) {
+        throw new NotFoundException(`Category detail with id ${categoryDetail} not found!`);
+      }
+
+      const [newFood] = await this.productModel.create([{ ...rest, categoryDetail, createdBy: author.sub }], { session });
+
+      await this.foodService.create(newFood._id, weight, pelletSize, session);
+
+      await this.stockModel.create(
+        [{ product: newFood._id, quantity }],
+        { session }
+      );
+
+      if (gallery && gallery.length > 0) {
+        await this.galleryModel.insertMany(
+          gallery.map(img => ({ imageUrl: img, product: newFood._id })),
+          { session }
+        );
+      }
+      await session.commitTransaction();
+      return { id: newFood._id, createdAt: newFood.createdAt };
+    } catch (error) {
+      try {
+        await session.abortTransaction();
+      } catch { }
+      this.logger.error("Created fish error: " + error.message, error.stack);
+      if (error?.code === 11000) throw new BadRequestException("Code already exists!");
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException("Something went wrong!");
+    } finally {
+      session.endSession();
     }
   }
 }
