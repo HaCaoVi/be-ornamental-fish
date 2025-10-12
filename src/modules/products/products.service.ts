@@ -72,11 +72,13 @@ export class ProductsService {
   }
 
   async findAll(
-    current = 1,
-    pageSize = 10,
+    current: number,
+    pageSize: number,
     query: Record<string, any> = {}
   ): Promise<PaginatedResult<Product>> {
     try {
+      if (!current) current = 1
+      if (!pageSize || pageSize > 50) pageSize = 10
       const { sort, filters, search, category } = query;
       const normalizedFilters = parseFilters(filters);
       const normalizedSort = normalizeSort(sort, ["createdAt", "updatedAt", "name", "price", "discount"]);
@@ -96,10 +98,6 @@ export class ProductsService {
 
       if (!pipeline.length) pipeline.push({ $match: baseMatch });
       else pipeline.push({ $match: baseMatch }); // combine filters with text search results
-
-      const countPipeline = [...pipeline, { $count: "total" }];
-      const countResult = await this.productModel.aggregate(countPipeline).exec();
-      const totalItems = countResult[0]?.total || 0;
 
       pipeline.push(
         {
@@ -127,13 +125,17 @@ export class ProductsService {
         { $unwind: { path: "$stock", preserveNullAndEmptyArrays: true } }
       );
 
+      const countPipeline = [...pipeline, { $count: "total" }];
+      const countResult = await this.productModel.aggregate(countPipeline).exec();
+
+      const totalItems = countResult[0]?.total || 0;
+
       if (normalizedSort && Object.keys(normalizedSort).length > 0)
         pipeline.push({ $sort: normalizedSort });
 
       pipeline.push({ $skip: skip }, { $limit: pageSize });
 
       const result = await this.productModel.aggregate(pipeline).exec();
-
       return {
         meta: buildMeta(current, pageSize, totalItems),
         result,
