@@ -13,7 +13,7 @@ import {
 import { Types } from 'mongoose';
 import { IsDiscountValid } from '@common/decorators/validate.decorator';
 
-export abstract class BaseProductDto {
+export class CreateProductDto {
     @IsString({ message: 'name must be a string' })
     @IsNotEmpty({ message: 'name is required' })
     name: string;
@@ -51,19 +51,8 @@ export abstract class BaseProductDto {
     @IsBoolean({ message: 'isActivated must be a boolean' })
     isActivated?: boolean;
 
-    @IsOptional()
-    @IsArray({ message: 'gallery must be an array' })
-    @IsUrl({}, { each: true, message: 'each gallery item must be a valid URL' })
-    gallery?: string[];
-
-    @IsNumber({}, { message: 'quantity must be a number' })
-    @Min(0, { message: 'quantity cannot be less than 0' })
-    quantity: number;
-}
-
-export class CreateFishDto extends BaseProductDto {
     @IsString({ message: 'color must be a string' })
-    @IsNotEmpty({ message: 'color is required' })
+    @IsOptional()
     color: string;
 
     @IsString({ message: 'origin must be a string' })
@@ -71,16 +60,20 @@ export class CreateFishDto extends BaseProductDto {
     origin: string;
 
     @IsString({ message: 'size must be a string' })
-    @IsNotEmpty({ message: 'size is required' })
+    @IsOptional()
     size: string;
-}
 
-export class CreateFoodDto extends BaseProductDto {
     @IsString({ message: 'weight must be a string' })
-    @IsNotEmpty({ message: 'weight is required' })
+    @IsOptional()
     weight: string;
 
-    @IsString({ message: 'pelletSize must be a string' })
-    @IsNotEmpty({ message: 'pelletSize is required' })
-    pelletSize: string;
+    @IsOptional()
+    @IsArray({ message: 'gallery must be an array' })
+    @IsUrl({}, { each: true, message: 'each gallery item must be a valid URL' })
+    gallery?: string[];
+
+    @IsNumber({}, { message: 'quantity must be a number' })
+    @Min(0, { message: 'quantity cannot be less than 0' })
+    @IsNotEmpty({ message: 'origin is required' })
+    quantity: number;
 }

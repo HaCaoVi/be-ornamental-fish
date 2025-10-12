@@ -38,6 +38,18 @@ export class Product {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "CategoryDetail", required: true })
     categoryDetail: CategoryDetail;
 
+    @Prop({ required: true })
+    origin: string
+
+    @Prop({ default: null })
+    color: string
+
+    @Prop({ default: null })
+    size: string
+
+    @Prop({ default: null })
+    weight: string
+
     @Prop({ default: false })
     isDeleted: boolean
 

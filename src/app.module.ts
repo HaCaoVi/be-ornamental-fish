@@ -9,8 +9,6 @@ import { AuthModule } from '@modules/auth/auth.module';
 import { FilesModule } from '@modules/files/files.module';
 import { CategoriesModule } from '@modules/categories/categories.module';
 import { ProductsModule } from '@modules/products/products.module';
-import { FishesModule } from '@modules/fishes/fishes.module';
-import { FoodsModule } from '@modules/foods/foods.module';
 
 @Module({
   imports: [
@@ -31,8 +29,6 @@ import { FoodsModule } from '@modules/foods/foods.module';
     FilesModule,
     CategoriesModule,
     ProductsModule,
-    FishesModule,
-    FoodsModule
   ],
   controllers: [AppController],
   providers: [AppService],

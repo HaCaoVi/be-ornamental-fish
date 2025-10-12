@@ -5,18 +5,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Product, ProductSchema } from './schemas/product.schema';
 import { Gallery, GallerySchema } from './schemas/gallery.schema';
 import { Stock, StockSchema } from './schemas/stock.schema';
-import { FishesModule } from '@modules/fishes/fishes.module';
 import { CategoriesModule } from '@modules/categories/categories.module';
-import { FoodsModule } from '@modules/foods/foods.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]),
     MongooseModule.forFeature([{ name: Gallery.name, schema: GallerySchema }]),
     MongooseModule.forFeature([{ name: Stock.name, schema: StockSchema }]),
-    FishesModule,
     forwardRef(() => CategoriesModule),
-    FoodsModule
   ],
   controllers: [ProductsController],
   providers: [ProductsService],

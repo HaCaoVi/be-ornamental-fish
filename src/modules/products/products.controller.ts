@@ -1,25 +1,25 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { CreateFishDto, CreateFoodDto } from './dto/create-product.dto';
-import { UpdateFishDto } from './dto/update-product.dto';
 import { ResponseMessage, Roles, UserReq } from '@common/decorators/customize.decorator';
 import type { IToken } from '@common/interfaces/customize.interface';
 import { Types } from 'mongoose';
 import { ERole } from '@common/types/type';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) { }
 
-  @Post("create-fish")
+  @Post("create-product")
   @Roles(ERole.ADMIN, ERole.STAFF)
-  @ResponseMessage("Created new fish")
+  @ResponseMessage("Created new product")
   createFish(
     @UserReq() user: IToken,
-    @Body() createFishDto: CreateFishDto
+    @Body() createFishDto: CreateProductDto
   ) {
-    return this.productsService.createFish(user, createFishDto);
+    return this.productsService.createProduct(user, createFishDto);
   }
 
   @Get("list-product")
@@ -42,7 +42,7 @@ export class ProductsController {
   update(
     @UserReq() user: IToken,
     @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
-    @Body() updateFishDto: UpdateFishDto) {
+    @Body() updateFishDto: UpdateProductDto) {
     return this.productsService.update(user, id, updateFishDto);
   }
 
@@ -53,15 +53,5 @@ export class ProductsController {
     @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
   ) {
     return this.productsService.removeProduct(user, id);
-  }
-
-  @Post("create-food")
-  @Roles(ERole.ADMIN, ERole.STAFF)
-  @ResponseMessage("Created new food")
-  createFood(
-    @UserReq() user: IToken,
-    @Body() createFoodDto: CreateFoodDto
-  ) {
-    return this.productsService.createFood(user, createFoodDto);
   }
 }

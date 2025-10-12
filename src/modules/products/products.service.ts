@@ -1,17 +1,15 @@
 import { BadRequestException, forwardRef, HttpException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { CreateFishDto, CreateFoodDto } from './dto/create-product.dto';
-import { UpdateFishDto } from './dto/update-product.dto';
+import { CreateProductDto } from './dto/create-product.dto';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Product, type ProductModelType } from './schemas/product.schema';
 import type { IToken, PaginatedResult } from '@common/interfaces/customize.interface';
 import { Connection, Model, Types } from 'mongoose';
 import { Stock } from './schemas/stock.schema';
 import { Gallery } from './schemas/gallery.schema';
-import { FishesService } from '@modules/fishes/fishes.service';
 import { CategoriesService } from '@modules/categories/categories.service';
 import { buildMeta } from '@common/helpers/customize.helper';
 import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
-import { FoodsService } from '@modules/foods/foods.service';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -23,41 +21,37 @@ export class ProductsService {
     @InjectModel(Gallery.name) private galleryModel: Model<Gallery>,
     @InjectModel(Stock.name) private stockModel: Model<Stock>,
     @Inject(forwardRef(() => CategoriesService)) private categoryService: CategoriesService,
-    private fishService: FishesService,
-    private foodService: FoodsService,
   ) { }
 
   async countProductHasCategoryDetailId(categoryDetailId: Types.ObjectId) {
     return this.productModel.countDocumentsSoftDelete({ categoryDetail: categoryDetailId });
   }
 
-  async createFish(author: IToken, createFishDto: CreateFishDto) {
+  async createProduct(author: IToken, createFishDto: CreateProductDto) {
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
-      const { color, size, origin, gallery, quantity, categoryDetail, ...rest } = createFishDto;
+      const { gallery, quantity, categoryDetail, ...rest } = createFishDto;
       const categoryDetailExist = await this.categoryService.isCategoryDetailExist(categoryDetail, session);
       if (!categoryDetailExist) {
         throw new NotFoundException(`Category detail with id ${categoryDetail} not found!`);
       }
 
-      const [newFish] = await this.productModel.create([{ ...rest, categoryDetail, createdBy: author.sub }], { session });
-
-      await this.fishService.create(newFish._id, color, size, origin, session);
+      const [newProduct] = await this.productModel.create([{ ...rest, categoryDetail, createdBy: author.sub }], { session });
 
       await this.stockModel.create(
-        [{ product: newFish._id, quantity }],
+        [{ product: newProduct._id, quantity }],
         { session }
       );
 
       if (gallery && gallery.length > 0) {
         await this.galleryModel.insertMany(
-          gallery.map(img => ({ imageUrl: img, product: newFish._id })),
+          gallery.map(img => ({ imageUrl: img, product: newProduct._id })),
           { session }
         );
       }
       await session.commitTransaction();
-      return { id: newFish._id, createdAt: newFish.createdAt };
+      return { id: newProduct._id, createdAt: newProduct.createdAt };
     } catch (error) {
       try {
         await session.abortTransaction();
@@ -174,22 +168,6 @@ export class ProductsService {
         { $unwind: { path: "$stock", preserveNullAndEmptyArrays: true } },
         {
           $lookup: {
-            from: "fish",
-            localField: "_id",
-            foreignField: "product",
-            as: "fish"
-          }
-        },
-        {
-          $lookup: {
-            from: "food",
-            localField: "_id",
-            foreignField: "product",
-            as: "food"
-          }
-        },
-        {
-          $lookup: {
             from: "gallery",
             localField: "_id",
             foreignField: "product",
@@ -206,7 +184,7 @@ export class ProductsService {
     }
   }
 
-  async update(author: IToken, productId: Types.ObjectId, updateFishDto: UpdateFishDto) {
+  async update(author: IToken, productId: Types.ObjectId, updateFishDto: UpdateProductDto) {
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
@@ -223,10 +201,6 @@ export class ProductsService {
         { ...rest, updatedBy: author.sub },
         { runValidators: true, session }
       );
-
-      if (color || size || origin) {
-        await this.fishService.update(productId, color, size, origin, session);
-      }
 
       if (updated.matchedCount === 0) {
         throw new NotFoundException(`Fish with id ${productId} not found`);
@@ -264,46 +238,6 @@ export class ProductsService {
       this.logger.error("Delete product error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
-    }
-  }
-
-  async createFood(author: IToken, createFoodDto: CreateFoodDto) {
-    const session = await this.connection.startSession();
-    session.startTransaction();
-    try {
-      const { weight, pelletSize, gallery, quantity, categoryDetail, ...rest } = createFoodDto;
-      const categoryDetailExist = await this.categoryService.isCategoryDetailExist(categoryDetail, session);
-      if (!categoryDetailExist) {
-        throw new NotFoundException(`Category detail with id ${categoryDetail} not found!`);
-      }
-
-      const [newFood] = await this.productModel.create([{ ...rest, categoryDetail, createdBy: author.sub }], { session });
-
-      await this.foodService.create(newFood._id, weight, pelletSize, session);
-
-      await this.stockModel.create(
-        [{ product: newFood._id, quantity }],
-        { session }
-      );
-
-      if (gallery && gallery.length > 0) {
-        await this.galleryModel.insertMany(
-          gallery.map(img => ({ imageUrl: img, product: newFood._id })),
-          { session }
-        );
-      }
-      await session.commitTransaction();
-      return { id: newFood._id, createdAt: newFood.createdAt };
-    } catch (error) {
-      try {
-        await session.abortTransaction();
-      } catch { }
-      this.logger.error("Created fish error: " + error.message, error.stack);
-      if (error?.code === 11000) throw new BadRequestException("Code already exists!");
-      if (error instanceof HttpException) throw error;
-      throw new InternalServerErrorException("Something went wrong!");
-    } finally {
-      session.endSession();
     }
   }
 }
