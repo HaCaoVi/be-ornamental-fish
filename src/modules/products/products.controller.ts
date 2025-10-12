@@ -15,11 +15,11 @@ export class ProductsController {
   @Post("create-product")
   @Roles(ERole.ADMIN, ERole.STAFF)
   @ResponseMessage("Created new product")
-  createFish(
+  create(
     @UserReq() user: IToken,
     @Body() createFishDto: CreateProductDto
   ) {
-    return this.productsService.createProduct(user, createFishDto);
+    return this.productsService.create(user, createFishDto);
   }
 
   @Get("list-product")
@@ -37,7 +37,8 @@ export class ProductsController {
     return this.productsService.findOne(id);
   }
 
-  @Patch('update-fish/:id')
+  @Patch('update-product/:id')
+  @ResponseMessage("Updated product")
   @Roles(ERole.ADMIN, ERole.STAFF)
   update(
     @UserReq() user: IToken,
@@ -47,6 +48,7 @@ export class ProductsController {
   }
 
   @Delete('delete-product/:id')
+  @ResponseMessage("Deleted product")
   @Roles(ERole.ADMIN)
   removeProduct(
     @UserReq() user: IToken,

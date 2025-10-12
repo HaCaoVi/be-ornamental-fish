@@ -27,12 +27,12 @@ export class ProductsService {
     return this.productModel.countDocumentsSoftDelete({ categoryDetail: categoryDetailId });
   }
 
-  async createProduct(author: IToken, createFishDto: CreateProductDto) {
+  async create(author: IToken, createFishDto: CreateProductDto) {
     const session = await this.connection.startSession();
     session.startTransaction();
     try {
-      const { gallery, quantity, categoryDetail, ...rest } = createFishDto;
-      const categoryDetailExist = await this.categoryService.isCategoryDetailExist(categoryDetail, session);
+      const { quantity, categoryDetail, ...rest } = createFishDto;
+      const categoryDetailExist = await this.categoryService.isCategoryDetailExist(categoryDetail);
       if (!categoryDetailExist) {
         throw new NotFoundException(`Category detail with id ${categoryDetail} not found!`);
       }
@@ -44,12 +44,6 @@ export class ProductsService {
         { session }
       );
 
-      if (gallery && gallery.length > 0) {
-        await this.galleryModel.insertMany(
-          gallery.map(img => ({ imageUrl: img, product: newProduct._id })),
-          { session }
-        );
-      }
       await session.commitTransaction();
       return { id: newProduct._id, createdAt: newProduct.createdAt };
     } catch (error) {
@@ -185,13 +179,11 @@ export class ProductsService {
   }
 
   async update(author: IToken, productId: Types.ObjectId, updateFishDto: UpdateProductDto) {
-    const session = await this.connection.startSession();
-    session.startTransaction();
     try {
-      const { color, size, origin, categoryDetail, ...rest } = updateFishDto;
+      const { categoryDetail, ...rest } = updateFishDto;
 
       if (categoryDetail) {
-        const exist = await this.categoryService.isCategoryDetailExist(categoryDetail, session);
+        const exist = await this.categoryService.isCategoryDetailExist(categoryDetail);
         if (!exist) {
           throw new NotFoundException(`Category detail with id ${categoryDetail} not found!`);
         }
@@ -199,28 +191,22 @@ export class ProductsService {
       const updated = await this.productModel.updateOne(
         { _id: productId },
         { ...rest, updatedBy: author.sub },
-        { runValidators: true, session }
+        { runValidators: true }
       );
 
       if (updated.matchedCount === 0) {
         throw new NotFoundException(`Fish with id ${productId} not found`);
       }
-      await session.commitTransaction();
 
       return {
         matchedCount: updated.matchedCount,
         modifiedCount: updated.modifiedCount
       };
     } catch (error) {
-      try {
-        await session.abortTransaction();
-      } catch { }
       this.logger.error("Updated fish error: " + error.message, error.stack);
       if (error?.code === 11000) throw new BadRequestException("Code already exists!");
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
-    } finally {
-      session.endSession();
     }
   }
 

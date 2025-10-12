@@ -60,8 +60,8 @@ export class CategoriesService {
     }
   }
 
-  async isCategoryDetailExist(categoryDetailId: Types.ObjectId, session: ClientSession) {
-    return !!(await this.categoryDetailModel.exists({ _id: categoryDetailId }).session(session));
+  async isCategoryDetailExist(categoryDetailId: Types.ObjectId) {
+    return !!(await this.categoryDetailModel.exists({ _id: categoryDetailId }));
   }
 
   async createCategoryDetail(author: IToken, createCategoryDetailDto: CreateCategoryDetailDto) {

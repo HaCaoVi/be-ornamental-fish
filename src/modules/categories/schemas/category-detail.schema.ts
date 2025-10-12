@@ -14,7 +14,7 @@ export class CategoryDetail {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true })
     category: Category;
 
-    @Prop({ required: true, unique: true })
+    @Prop({ required: true })
     name: string;
 
     @Prop({ default: false })

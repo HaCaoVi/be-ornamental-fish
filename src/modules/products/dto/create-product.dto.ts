@@ -35,7 +35,7 @@ export class CreateProductDto {
     @Validate(IsDiscountValid)
     discount: number;
 
-    @IsUrl({}, { message: 'mainImageUrl must be a valid URL' })
+    @IsString({ message: 'mainImageUrl must be a string' })
     @IsNotEmpty({ message: 'mainImageUrl is required' })
     mainImageUrl: string;
 
@@ -66,11 +66,6 @@ export class CreateProductDto {
     @IsString({ message: 'weight must be a string' })
     @IsOptional()
     weight: string;
-
-    @IsOptional()
-    @IsArray({ message: 'gallery must be an array' })
-    @IsUrl({}, { each: true, message: 'each gallery item must be a valid URL' })
-    gallery?: string[];
 
     @IsNumber({}, { message: 'quantity must be a number' })
     @Min(0, { message: 'quantity cannot be less than 0' })
