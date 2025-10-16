@@ -1,7 +1,7 @@
 import { BadRequestException, forwardRef, HttpException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDetailDto, CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './schemas/category.schema';
-import { ClientSession, Model, Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { CategoryDetail, type CategoryDetailModelType } from './schemas/category-detail.schema';
 import { IToken, PaginatedResult } from '@common/interfaces/customize.interface';
@@ -180,6 +180,45 @@ export class CategoriesService {
       }
     } catch (error) {
       this.logger.error("Delete category detail error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
+  }
+
+  async findAllFollowCategory() {
+    try {
+      const result = await this.categoryModel.aggregate([
+        {
+          $lookup: {
+            from: "categorydetails",       // tên collection bên kia
+            localField: "_id",             // field trong bảng hiện tại (category)
+            foreignField: "category",      // field tham chiếu trong categoryDetail
+            as: "details"                  // tên field mới chứa dữ liệu join
+          }
+        },
+        {
+          $addFields: {
+            details: {
+              $filter: {
+                input: "$details",
+                as: "detail",
+                cond: { $eq: ["$$detail.isDeleted", false] } // chỉ lấy isDeleted = false
+              }
+            }
+          }
+        },
+        {
+          $project: {
+            _id: 1,           // giữ _id của category
+            name: 1,          // giữ tên category
+            "details._id": 1, // giữ _id của detail
+            "details.name": 1 // giữ tên detail
+          }
+        }
+      ])
+      return result
+    } catch (error) {
+      this.logger.error("List all follow category error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }

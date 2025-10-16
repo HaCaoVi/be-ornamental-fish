@@ -70,4 +70,12 @@ export class CategoriesController {
   ) {
     return this.categoriesService.deleteCategoryDetail(user, id);
   }
+
+  @Public()
+  @Get("list-all-follow-category")
+  @ResponseMessage("Get list category detail")
+  findAllFollowCategory() {
+    return this.categoriesService.findAllFollowCategory();
+  }
+
 }
