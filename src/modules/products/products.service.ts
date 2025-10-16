@@ -5,7 +5,6 @@ import { Product, type ProductModelType } from './schemas/product.schema';
 import type { IToken, PaginatedResult } from '@common/interfaces/customize.interface';
 import { Connection, Model, Types } from 'mongoose';
 import { Stock } from './schemas/stock.schema';
-import { Gallery } from './schemas/gallery.schema';
 import { CategoriesService } from '@modules/categories/categories.service';
 import { buildMeta } from '@common/helpers/customize.helper';
 import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
@@ -18,7 +17,6 @@ export class ProductsService {
   constructor(
     @InjectConnection() private readonly connection: Connection,
     @InjectModel(Product.name) private productModel: ProductModelType,
-    @InjectModel(Gallery.name) private galleryModel: Model<Gallery>,
     @InjectModel(Stock.name) private stockModel: Model<Stock>,
     @Inject(forwardRef(() => CategoriesService)) private categoryService: CategoriesService,
   ) { }
@@ -70,11 +68,25 @@ export class ProductsService {
       const { sort, filters, search, category } = query;
       const normalizedFilters = parseFilters(filters);
       const normalizedSort = normalizeSort(sort, ["createdAt", "updatedAt", "name", "price", "discount"]);
-
       const skip = (current - 1) * pageSize;
       const pipeline: any[] = [];
-
-      let baseMatch: any = { isDeleted: false, ...normalizedFilters };
+      const { price, categoryDetail, sale = false, ...rest } = normalizedFilters;
+      let baseMatch: any = { isDeleted: false, ...rest };
+      if (sale) {
+        baseMatch.discount = { $ne: 0 }
+      }
+      if (categoryDetail !== undefined && categoryDetail.length > 0) {
+        const listCate = categoryDetail.map((x: string) => {
+          return new Types.ObjectId(x)
+        })
+        baseMatch.categoryDetail = { $in: listCate }
+      }
+      if (Array.isArray(price) && price.length === 2) {
+        const [min, max] = price.map(Number);
+        if (!isNaN(min) && !isNaN(max)) {
+          baseMatch.price = { $gte: min, $lte: max };
+        }
+      }
       if (search) {
         const isCodeSearch = /^[A-Z0-9-]+$/.test(search.trim());
         if (isCodeSearch) {
@@ -84,8 +96,7 @@ export class ProductsService {
         }
       }
 
-      if (!pipeline.length) pipeline.push({ $match: baseMatch });
-      else pipeline.push({ $match: baseMatch }); // combine filters with text search results
+      pipeline.push({ $match: baseMatch });
 
       pipeline.push(
         {
@@ -135,10 +146,10 @@ export class ProductsService {
     }
   }
 
-  async findOne(productId: Types.ObjectId) {
+  async findOne(code: string) {
     try {
       const pipeline: any[] = [
-        { $match: { _id: new Types.ObjectId(productId), isDeleted: false } },
+        { $match: { code: code, isDeleted: false } },
         {
           $lookup: {
             from: "categorydetails",
@@ -224,6 +235,40 @@ export class ProductsService {
       this.logger.error("Delete product error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
+    }
+  }
+
+  async recommendProduct(categoryDetailId: Types.ObjectId, code: string, current = 1, pageSize = 20) {
+    try {
+      const skip = (current - 1) * pageSize
+      const match = {
+        isDeleted: false,
+        categoryDetail: new Types.ObjectId(categoryDetailId),
+        code: { $ne: code }
+
+      }
+
+      const data = await
+        this.productModel.aggregate([
+          { $match: match },
+          {
+            $lookup: {
+              from: "stocks",
+              localField: "_id",
+              foreignField: "product",
+              as: "stock",
+            },
+          },
+          { $unwind: { path: "$stock", preserveNullAndEmptyArrays: true } },
+          { $skip: skip },
+          { $limit: pageSize },
+        ])
+
+      return data
+    } catch (error) {
+      this.logger.error("Recommend product error: " + error.message, error.stack)
+      if (error instanceof HttpException) throw error
+      throw new InternalServerErrorException("Something went wrong!")
     }
   }
 }

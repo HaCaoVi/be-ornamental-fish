@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { ResponseMessage, Roles, UserReq } from '@common/decorators/customize.decorator';
+import { Public, ResponseMessage, Roles, UserReq } from '@common/decorators/customize.decorator';
 import type { IToken } from '@common/interfaces/customize.interface';
 import { Types } from 'mongoose';
 import { ERole } from '@common/types/type';
@@ -22,6 +22,7 @@ export class ProductsController {
     return this.productsService.create(user, createFishDto);
   }
 
+  @Public()
   @Get("list-product")
   findAll(
     @Query() query: any
@@ -30,11 +31,12 @@ export class ProductsController {
     return this.productsService.findAll(+current, +pageSize, filters);
   }
 
-  @Get('get-product/:id')
+  @Public()
+  @Get('get-product/:code')
   findOne(
-    @Param('id', ParseObjectIdPipe) id: Types.ObjectId
+    @Param('code') code: string
   ) {
-    return this.productsService.findOne(id);
+    return this.productsService.findOne(code);
   }
 
   @Patch('update-product/:id')
@@ -55,5 +57,14 @@ export class ProductsController {
     @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
   ) {
     return this.productsService.removeProduct(user, id);
+  }
+
+  @Public()
+  @Get("list-recommend-product")
+  recommendProduct(
+    @Query() query: any
+  ) {
+    const { categoryDetailId, exclude } = query
+    return this.productsService.recommendProduct(categoryDetailId, exclude);
   }
 }
