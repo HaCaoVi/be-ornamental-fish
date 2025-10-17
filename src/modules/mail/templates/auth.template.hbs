@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Activation Code</title>
+    <style>
+        body {
+            font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #000;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .header {
+            background-color: #000;
+            text-align: center;
+            padding: 5px 0;
+        }
+
+        .header img {
+            height: 30px;
+        }
+
+        .content {
+            padding: 20px 30px;
+        }
+
+        h1 {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .code {
+            font-size: 28px;
+            font-weight: bold;
+            color: #f0b90b;
+            margin: 20px 0;
+        }
+
+        ul {
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        a {
+            color: #0056b3;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            font-size: 12px;
+            color: #666;
+            padding: 20px 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .socials {
+            text-align: center;
+            padding-top: 20px;
+        }
+
+        .socials img {
+            margin: 0 6px;
+            width: 24px;
+            vertical-align: middle;
+        }
+
+        .note {
+            font-size: 11px;
+            color: #888;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="color: white;">IFish</h1>
+        </div>
+        <div class="content">
+            <h1>Your New Journey Starts Now</h1>
+            <p>Welcome to IFish. Confirm your registration by using the activation code below.</p>
+            <p><strong>Account activation code:</strong></p>
+            <div class="code">{{code}}</div>
+
+            <p><strong>Security Tips :</strong></p>
+            <ul>
+                <li>Never give your password to anyone.</li>
+                <li>Never call any phone number from someone claiming to be IFish Customer Support.</li>
+                <li>Enable <a href="#">Google Two-Factor Authentication</a>.</li>
+                <li>For more information, visit <a href="#">15 Tips to Enhance Security for Your IFish
+                        Account</a>.</li>
+            </ul>
+
+            <p>Don’t recognize this activity? Please <a href="#">reset your password</a> and contact <a
+                    href="#">customer support</a> immediately.</p>
+            <p><em>This is an automated message, please do not reply.</em></p>
+        </div>
+        <div class="footer">
+            <div class="socials">
+                <p><strong>Stay connected!</strong></p>
+                <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Facebook" />
+                <img src="https://cdn-icons-png.flaticon.com/512/733/733558.png" alt="LinkedIn" />
+                <img src="https://cdn-icons-png.flaticon.com/512/733/733590.png" alt="Instagram" />
+                <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube" />
+            </div>
+            <div class="note">
+                &copy; {{year}} IFish. All Rights Reserved.
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

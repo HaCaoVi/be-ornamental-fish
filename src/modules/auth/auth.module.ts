@@ -8,13 +8,15 @@ import { LocalStrategy } from './passport/local.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt/jwt.strategy';
 import { RolesModule } from '@modules/roles/roles.module';
+import { MailModule } from '@modules/mail/mail.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     PassportModule,
     JwtModule,
-    RolesModule
+    RolesModule,
+    MailModule
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],
   controllers: [AuthController]

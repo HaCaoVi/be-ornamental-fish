@@ -10,6 +10,7 @@ import { EAccountType } from '@common/types/type';
 import { RegisterUserDto } from '@modules/users/dto/create-user.dto';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
+import { MailService } from '@modules/mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
         @InjectModel(User.name) private userModel: UserModelType,
         private jwtService: JwtService,
         private configService: ConfigService,
+        private mailService: MailService
     ) { }
 
     async signAccessTokenJWT(payload: IToken) {
@@ -157,6 +159,7 @@ export class AuthService {
             const codeActive = uuidv4();
             const codeExpired = dayjs().add(+process.env.MAIL_EXPIRE_IN!, "minute")
             const newUser = await this.userModel.create({ ...registerUserDto, codeActive, codeExpired });
+            await this.mailService.sendMailAuthentication(registerUserDto.email, "【IFish】 Confirm Your Authentication", codeActive)
             return {
                 _id: newUser._id,
                 createdAt: newUser.createdAt

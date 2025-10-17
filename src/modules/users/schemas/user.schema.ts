@@ -91,7 +91,12 @@ export class User {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-UserSchema.index({ email: 1, accountType: 1 }, { unique: true });
+UserSchema.index(
+    { email: 1, accountType: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { isDeleted: false }
+    });
 
 UserSchema.plugin(softDeletePlugin);
 
