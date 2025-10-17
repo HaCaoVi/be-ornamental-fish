@@ -7,6 +7,9 @@ import { JwtService } from '@nestjs/jwt';
 import { IToken } from '@common/interfaces/customize.interface';
 import { ConfigService } from '@nestjs/config';
 import { EAccountType } from '@common/types/type';
+import { RegisterUserDto } from '@modules/users/dto/create-user.dto';
+import { v4 as uuidv4 } from 'uuid';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class AuthService {
@@ -144,6 +147,25 @@ export class AuthService {
             return "oke"
         } catch (error) {
             this.logger.error("Logout error: " + error.message, error.stack);
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Something went wrong!');
+        }
+    }
+
+    async register(registerUserDto: RegisterUserDto) {
+        try {
+            const codeActive = uuidv4();
+            const codeExpired = dayjs().add(+process.env.MAIL_EXPIRE_IN!, "minute")
+            const newUser = await this.userModel.create({ ...registerUserDto, codeActive, codeExpired });
+            return {
+                _id: newUser._id,
+                createdAt: newUser.createdAt
+            }
+        } catch (error) {
+            this.logger.error("Register error: " + error.message, error.stack);
+            if (error?.code === 11000) {
+                throw new BadRequestException("Email already exists!");
+            }
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Something went wrong!');
         }

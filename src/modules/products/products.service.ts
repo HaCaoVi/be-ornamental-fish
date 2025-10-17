@@ -6,7 +6,7 @@ import type { IToken, PaginatedResult } from '@common/interfaces/customize.inter
 import { Connection, Model, Types } from 'mongoose';
 import { Stock } from './schemas/stock.schema';
 import { CategoriesService } from '@modules/categories/categories.service';
-import { buildMeta } from '@common/helpers/customize.helper';
+import { buildMeta } from '@common/helpers/helper';
 import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
 import { UpdateProductDto } from './dto/update-product.dto';
 

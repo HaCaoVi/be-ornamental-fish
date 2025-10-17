@@ -9,7 +9,7 @@ import { EAccountType } from '@common/types/type';
 import { buildPopulateConfigFromStrings } from '@common/helpers/mongoose-populate.helper';
 import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
 import { Types } from 'mongoose';
-import { buildMeta } from '@common/helpers/customize.helper';
+import { buildMeta } from '@common/helpers/helper';
 import { ConfigService } from '@nestjs/config';
 import { RolesService } from '@modules/roles/roles.service';
 

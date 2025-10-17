@@ -1,4 +1,5 @@
 
+import { DEFAULT_ROLE } from '@common/constants/constant';
 import { SoftDeleteModel } from '@common/interfaces/customize.interface';
 import { softDeletePlugin } from '@common/plugins/soft-delete.plugin';
 import { EAccountType, EGender } from '@common/types/type';
@@ -24,6 +25,9 @@ export class User {
     @Prop({ default: "" })
     avatar: string;
 
+    @Prop({ default: "" })
+    phone: string;
+
     @Prop()
     birthday: Date;
 
@@ -41,7 +45,7 @@ export class User {
     })
     accountType: string
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "Role" })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "Role", default: DEFAULT_ROLE })
     role: Role;
 
     @Prop({ default: "" })

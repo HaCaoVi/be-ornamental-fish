@@ -1,8 +1,9 @@
 import { Cookies, Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
-import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { AuthService } from './auth.service';
 import type { IToken } from '@common/interfaces/customize.interface';
+import { RegisterUserDto } from '@modules/users/dto/create-user.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -41,5 +42,14 @@ export class AuthController {
         @UserReq() user: IToken
     ) {
         return this.authService.logout(user)
+    }
+
+    @Public()
+    @Post('register')
+    @ResponseMessage("Registered successfully")
+    register(
+        @Body() registerUserDto: RegisterUserDto
+    ) {
+        return this.authService.register(registerUserDto)
     }
 }

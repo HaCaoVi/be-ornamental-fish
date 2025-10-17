@@ -7,7 +7,7 @@ import { CategoryDetail, type CategoryDetailModelType } from './schemas/category
 import { IToken, PaginatedResult } from '@common/interfaces/customize.interface';
 import { UpdateCategoryDetailDto } from './dto/update-category.dto';
 import { ProductsService } from '@modules/products/products.service';
-import { buildMeta } from '@common/helpers/customize.helper';
+import { buildMeta } from '@common/helpers/helper';
 import { parseFilters } from '@common/helpers/convert.helper';
 
 @Injectable()
