@@ -1,9 +1,12 @@
 import { Cookies, Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { AuthService } from './auth.service';
 import type { IToken } from '@common/interfaces/customize.interface';
-import { RegisterUserDto } from '@modules/users/dto/create-user.dto';
+import { ActiveAccountDto } from './dto/active-account.dto';
+import { RegisterUserDto } from './dto/register.dto';
+import { ParseObjectIdPipe } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 @Controller('auth')
 export class AuthController {
@@ -51,5 +54,23 @@ export class AuthController {
         @Body() registerUserDto: RegisterUserDto
     ) {
         return this.authService.register(registerUserDto)
+    }
+
+    @Public()
+    @Post('active-account')
+    @ResponseMessage("Activated successfully")
+    activeAccount(
+        @Body() activeAccountDto: ActiveAccountDto
+    ) {
+        return this.authService.activeAccount(activeAccountDto)
+    }
+
+    @Public()
+    @Get('retry-active/:userId')
+    @ResponseMessage("Retried successfully")
+    retryActive(
+        @Param("userId", ParseObjectIdPipe) userId: Types.ObjectId
+    ) {
+        return this.authService.retryActive(userId)
     }
 }

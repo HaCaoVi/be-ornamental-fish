@@ -10,7 +10,7 @@ export class MailService {
         private configService: ConfigService,
     ) { }
 
-    async sendMailAuthentication(to: string, subject: string, code: string) {
+    async sendMailAuthentication(to: string, subject: string, code: string, callBack?: () => void) {
         try {
             await this.mailerService.sendMail({
                 to: to,
@@ -24,7 +24,8 @@ export class MailService {
             })
             return;
         } catch (error) {
-            this.logger.error("Register error: " + error.message, error.stack);
+            this.logger.error("Send mail error: " + error.message, error.stack);
+            callBack && callBack();
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Something went wrong!');
         }

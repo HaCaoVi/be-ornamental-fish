@@ -7,10 +7,12 @@ import { JwtService } from '@nestjs/jwt';
 import { IToken } from '@common/interfaces/customize.interface';
 import { ConfigService } from '@nestjs/config';
 import { EAccountType } from '@common/types/type';
-import { RegisterUserDto } from '@modules/users/dto/create-user.dto';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 import { MailService } from '@modules/mail/mail.service';
+import { Types } from 'mongoose';
+import { ActiveAccountDto } from './dto/active-account.dto';
+import { RegisterUserDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
@@ -159,7 +161,10 @@ export class AuthService {
             const codeActive = uuidv4();
             const codeExpired = dayjs().add(+process.env.MAIL_EXPIRE_IN!, "minute")
             const newUser = await this.userModel.create({ ...registerUserDto, codeActive, codeExpired });
-            await this.mailService.sendMailAuthentication(registerUserDto.email, "【IFish】 Confirm Your Authentication", codeActive)
+            const callBack = async () => {
+                await this.userModel.deleteOne({ _id: newUser._id });
+            }
+            await this.mailService.sendMailAuthentication(registerUserDto.email, "【IFish】 Confirm Your Authentication", codeActive, callBack)
             return {
                 _id: newUser._id,
                 createdAt: newUser.createdAt
@@ -169,6 +174,67 @@ export class AuthService {
             if (error?.code === 11000) {
                 throw new BadRequestException("Email already exists!");
             }
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Something went wrong!');
+        }
+    }
+
+    async retryActive(userId: Types.ObjectId) {
+        try {
+            const user = await this.userModel.findById(userId);
+            if (!user) {
+                throw new NotFoundException(`User not found with id ${userId}`);
+            }
+            if (user.isActivated) {
+                throw new BadRequestException("Account already activated!");
+            }
+            const codeActive = uuidv4();
+            const codeExpired = dayjs().add(+process.env.MAIL_EXPIRE_IN!, "minute");
+            const updated = await this.userModel.updateOne({ _id: userId }, { codeActive, codeExpired });
+            if (updated.matchedCount === 0) {
+                throw new NotFoundException("Updated fail!");
+            }
+            await this.mailService.sendMailAuthentication(user.email, "【IFish】 Confirm Your Authentication", codeActive);
+            return {
+                matchedCount: updated.matchedCount,
+                modifiedCount: updated.modifiedCount
+            };
+        } catch (error) {
+            this.logger.error("Retry active error: " + error.message, error.stack);
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Something went wrong!');
+        }
+    }
+
+    async activeAccount(activeAccountDto: ActiveAccountDto) {
+        try {
+            const { userId, code } = activeAccountDto
+            const user = await this.userModel.findById(userId);
+            if (!user) {
+                throw new NotFoundException(`User not found with id ${userId}`);
+            }
+            if (user.isActivated) {
+                throw new BadRequestException("Account already activated!");
+            }
+            if (code !== user.codeActive) {
+                throw new BadRequestException("Your code is invalid!");
+            }
+            const codeExpired = dayjs(user.codeExpired);
+            const now = dayjs();
+            const isExpired = now.isAfter(codeExpired);
+            if (isExpired) {
+                throw new BadRequestException("Your code has expired!");
+            }
+            const updated = await this.userModel.updateOne({ _id: userId }, { isActivated: true });
+            if (updated.matchedCount === 0) {
+                throw new NotFoundException("Activated fail!");
+            }
+            return {
+                matchedCount: updated.matchedCount,
+                modifiedCount: updated.modifiedCount
+            };
+        } catch (error) {
+            this.logger.error("Active account error: " + error.message, error.stack);
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Something went wrong!');
         }

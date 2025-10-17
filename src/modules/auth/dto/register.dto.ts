@@ -1,10 +1,9 @@
-import { IsBoolean, IsDate, IsEmail, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { IsDate, IsEmail, IsEnum, IsNotEmpty, IsPhoneNumber, IsString, Length } from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsPastDate } from '@common/decorators/validate.decorator';
 import { EGender } from '@common/types/type';
-import { Types } from 'mongoose';
 
-export class CreateUserDto {
+export class RegisterUserDto {
     @IsString({ message: 'name must be a string' })
     @IsNotEmpty({ message: 'name is required!' })
     name: string;
@@ -24,6 +23,11 @@ export class CreateUserDto {
     @IsPastDate({ message: 'birthday must be in the past' })
     birthday: Date;
 
+    @IsPhoneNumber('VN', { message: 'Invalid Vietnamese phone number format.' })
+    @IsString({ message: 'phone must be a string' })
+    @IsNotEmpty({ message: 'phone is required!' })
+    phone: string;
+
     @IsNotEmpty({ message: 'gender is required!' })
     @IsEnum(EGender, { message: 'gender must be MALE, FEMALE, or OTHER' })
     gender: EGender;
@@ -31,12 +35,4 @@ export class CreateUserDto {
     @IsString({ message: 'address must be a string' })
     @IsNotEmpty({ message: 'address is required!' })
     address: string;
-
-    @IsNotEmpty({ message: 'role is required!' })
-    @IsMongoId({ message: 'role must be a valid ObjectId!' })
-    role: Types.ObjectId;
-
-    @IsOptional()
-    @IsBoolean({ message: "isActivated must be a valid boolean" })
-    isActivated: boolean
 }
