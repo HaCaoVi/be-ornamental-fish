@@ -1,12 +1,15 @@
-import { IsMongoId, IsNotEmpty, IsString } from 'class-validator';
+import { PickType } from '@nestjs/mapped-types';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 
 export class ActiveAccountDto {
-    @IsMongoId({ message: 'userId must be a valid ObjectId!' })
+    @IsEmail({}, { message: 'email invalid!' })
     @IsNotEmpty({ message: 'userId is required!' })
-    userId: string;
+    email: string;
 
     @IsNotEmpty({ message: 'code is required!' })
     @IsString({ message: 'code invalid!' })
     code: string;
 }
+
+export class RetryActiveAccountDto extends PickType(ActiveAccountDto, ["email"] as const) { }

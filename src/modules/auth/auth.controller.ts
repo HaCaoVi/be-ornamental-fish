@@ -1,12 +1,13 @@
 import { Cookies, Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { AuthService } from './auth.service';
 import type { IToken } from '@common/interfaces/customize.interface';
-import { ActiveAccountDto } from './dto/active-account.dto';
+import { ActiveAccountDto, RetryActiveAccountDto } from './dto/active-account.dto';
 import { RegisterUserDto } from './dto/register.dto';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
+import { IsEmail } from 'class-validator';
 
 @Controller('auth')
 export class AuthController {
@@ -57,7 +58,7 @@ export class AuthController {
     }
 
     @Public()
-    @Post('active-account')
+    @Patch('active-account')
     @ResponseMessage("Activated successfully")
     activeAccount(
         @Body() activeAccountDto: ActiveAccountDto
@@ -66,11 +67,11 @@ export class AuthController {
     }
 
     @Public()
-    @Get('retry-active/:userId')
-    @ResponseMessage("Retried successfully")
+    @Post('retry-active')
+    @ResponseMessage("Please check your email to validation code!")
     retryActive(
-        @Param("userId", ParseObjectIdPipe) userId: Types.ObjectId
+        @Body() req: RetryActiveAccountDto
     ) {
-        return this.authService.retryActive(userId)
+        return this.authService.retryActive(req.email)
     }
 }

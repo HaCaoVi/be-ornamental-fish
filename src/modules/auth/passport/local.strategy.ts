@@ -1,7 +1,7 @@
 
 import { Strategy } from 'passport-local';
 import { PassportStrategy } from '@nestjs/passport';
-import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../auth.service';
 import type { IToken } from '@common/interfaces/customize.interface';
 
@@ -18,7 +18,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
         }
 
         if (!user.isActivated) {
-            throw new UnauthorizedException("Your account is not activated. Please check your email to activate.");
+            throw new ConflictException("Your account is not activated. Please check your email to activate.");
         }
 
         if (user.isBanned) {

@@ -2,7 +2,7 @@ import { User } from '@modules/users/schemas/user.schema';
 import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { UserModelType } from '@modules/users/schemas/user.schema';
-import { compareHashBcrypt, hashTokenSHA256 } from '@common/helpers/security.helper';
+import { compareHashBcrypt, hashBcrypt, hashTokenSHA256 } from '@common/helpers/security.helper';
 import { JwtService } from '@nestjs/jwt';
 import { IToken } from '@common/interfaces/customize.interface';
 import { ConfigService } from '@nestjs/config';
@@ -160,9 +160,11 @@ export class AuthService {
         try {
             const codeActive = uuidv4();
             const codeExpired = dayjs().add(+process.env.MAIL_EXPIRE_IN!, "minute")
-            const newUser = await this.userModel.create({ ...registerUserDto, codeActive, codeExpired });
+            const hashPass = await hashBcrypt(registerUserDto.password);
+            const newUser = await this.userModel.create({ ...registerUserDto, password: hashPass, codeActive, codeExpired });
             const callBack = async () => {
                 await this.userModel.deleteOne({ _id: newUser._id });
+                throw new BadRequestException("Email invalid!")
             }
             await this.mailService.sendMailAuthentication(registerUserDto.email, "【IFish】 Confirm Your Authentication", codeActive, callBack)
             return {
@@ -179,18 +181,18 @@ export class AuthService {
         }
     }
 
-    async retryActive(userId: Types.ObjectId) {
+    async retryActive(email: string) {
         try {
-            const user = await this.userModel.findById(userId);
+            const user = await this.userModel.findOne({ email: email, accountType: EAccountType.LOCAL });
             if (!user) {
-                throw new NotFoundException(`User not found with id ${userId}`);
+                throw new NotFoundException(`User not found with ${email}`);
             }
             if (user.isActivated) {
                 throw new BadRequestException("Account already activated!");
             }
             const codeActive = uuidv4();
             const codeExpired = dayjs().add(+process.env.MAIL_EXPIRE_IN!, "minute");
-            const updated = await this.userModel.updateOne({ _id: userId }, { codeActive, codeExpired });
+            const updated = await this.userModel.updateOne({ email: email, accountType: EAccountType.LOCAL }, { codeActive, codeExpired });
             if (updated.matchedCount === 0) {
                 throw new NotFoundException("Updated fail!");
             }
@@ -208,10 +210,10 @@ export class AuthService {
 
     async activeAccount(activeAccountDto: ActiveAccountDto) {
         try {
-            const { userId, code } = activeAccountDto
-            const user = await this.userModel.findById(userId);
+            const { email, code } = activeAccountDto
+            const user = await this.userModel.findOne({ email: email, accountType: EAccountType.LOCAL });
             if (!user) {
-                throw new NotFoundException(`User not found with id ${userId}`);
+                throw new NotFoundException(`User not found with ${email}`);
             }
             if (user.isActivated) {
                 throw new BadRequestException("Account already activated!");
@@ -225,7 +227,7 @@ export class AuthService {
             if (isExpired) {
                 throw new BadRequestException("Your code has expired!");
             }
-            const updated = await this.userModel.updateOne({ _id: userId }, { isActivated: true });
+            const updated = await this.userModel.updateOne({ email: email, accountType: EAccountType.LOCAL }, { isActivated: true });
             if (updated.matchedCount === 0) {
                 throw new NotFoundException("Activated fail!");
             }
