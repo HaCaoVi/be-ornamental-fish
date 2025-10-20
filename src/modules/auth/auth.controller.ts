@@ -1,17 +1,21 @@
 import { Cookies, Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { AuthService } from './auth.service';
-import type { IToken } from '@common/interfaces/customize.interface';
+import type { IGoogleUser, IToken } from '@common/interfaces/customize.interface';
 import { ActiveAccountDto, RetryActiveAccountDto } from './dto/active-account.dto';
 import { RegisterUserDto } from './dto/register.dto';
-import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import { IsEmail } from 'class-validator';
+import { GoogleAuthGuard } from './passport/google-auth.guard';
+import type { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) { }
+    constructor(
+        private authService: AuthService,
+        private configService: ConfigService
+    ) { }
 
     @Public()
     @UseGuards(LocalAuthGuard)
@@ -73,5 +77,23 @@ export class AuthController {
         @Body() req: RetryActiveAccountDto
     ) {
         return this.authService.retryActive(req.email)
+    }
+
+    @Public()
+    @Get('google')
+    @UseGuards(GoogleAuthGuard)
+    async googleAuth() { }
+
+    // Bước 2: Google callback
+    @Public()
+    @Get('google/redirect')
+    @UseGuards(GoogleAuthGuard)
+    async googleAuthRedirect(
+        @UserReq() user: IGoogleUser,
+        @Res() res: Response
+    ) {
+        const token = await this.authService.loginWithGoogle(user)
+        const frontendUrl = `${this.configService.get<string>("FE_ORIGIN_URL")}/auth/google-success?token=${token.access_token}`;
+        return res.redirect(frontendUrl);
     }
 }

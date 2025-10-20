@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import type { UserModelType } from '@modules/users/schemas/user.schema';
 import { compareHashBcrypt, hashBcrypt, hashTokenSHA256 } from '@common/helpers/security.helper';
 import { JwtService } from '@nestjs/jwt';
-import { IToken } from '@common/interfaces/customize.interface';
+import { IGoogleUser, IToken } from '@common/interfaces/customize.interface';
 import { ConfigService } from '@nestjs/config';
 import { EAccountType } from '@common/types/type';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,6 +13,7 @@ import { MailService } from '@modules/mail/mail.service';
 import { Types } from 'mongoose';
 import { ActiveAccountDto } from './dto/active-account.dto';
 import { RegisterUserDto } from './dto/register.dto';
+import { CUSTOMER_ROLE } from '@common/constants/constant';
 
 @Injectable()
 export class AuthService {
@@ -39,19 +40,20 @@ export class AuthService {
         })
     }
 
-    async findUserByUsername(username: string): Promise<User | null> {
+    async findUserByUsername(username: string): Promise<any | null> {
         const user = await this.userModel
             .findOne({ email: username, accountType: EAccountType.LOCAL })
             .populate({
                 path: "role",
-                select: "_id name"
+                select: "name"
             })
             .lean<User>()
             .exec();
-        return user ?? null;
+        const dataConfig = { ...user, role: user!.role.name }
+        return dataConfig ?? null;
     }
 
-    async validateUser(username: string, pass: string): Promise<User | null> {
+    async validateUser(username: string, pass: string): Promise<any | null> {
         const user = await this.findUserByUsername(username);
         if (!user) return null;
 
@@ -159,7 +161,7 @@ export class AuthService {
     async register(registerUserDto: RegisterUserDto) {
         try {
             const codeActive = uuidv4();
-            const codeExpired = dayjs().add(+process.env.MAIL_EXPIRE_IN!, "minute")
+            const codeExpired = dayjs().add(+this.configService.get("MAIL_EXPIRE_IN"), "minute")
             const hashPass = await hashBcrypt(registerUserDto.password);
             const newUser = await this.userModel.create({ ...registerUserDto, password: hashPass, codeActive, codeExpired });
             const callBack = async () => {
@@ -191,7 +193,7 @@ export class AuthService {
                 throw new BadRequestException("Account already activated!");
             }
             const codeActive = uuidv4();
-            const codeExpired = dayjs().add(+process.env.MAIL_EXPIRE_IN!, "minute");
+            const codeExpired = dayjs().add(+this.configService.get("MAIL_EXPIRE_IN"), "minute");
             const updated = await this.userModel.updateOne({ email: email, accountType: EAccountType.LOCAL }, { codeActive, codeExpired });
             if (updated.matchedCount === 0) {
                 throw new NotFoundException("Updated fail!");
@@ -237,6 +239,49 @@ export class AuthService {
             };
         } catch (error) {
             this.logger.error("Active account error: " + error.message, error.stack);
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Something went wrong!');
+        }
+    }
+
+    async loginWithGoogle(user: IGoogleUser) {
+        try {
+            const { email, firstName, id, lastName, picture } = user;
+
+            const hashPass = await hashBcrypt(id);
+
+            const newUser = await this.userModel.findOneAndUpdate(
+                { email, accountType: EAccountType.GOOGLE },
+                {
+                    name: `${firstName ?? ''} ${lastName ?? ''}`.trim(),
+                    avatar: picture,
+                    email,
+                    password: hashPass,
+                    isActivated: true,
+                    accountType: EAccountType.GOOGLE,
+                },
+                { upsert: true, new: true }
+            );
+
+            const payload = {
+                sub: newUser._id,
+                email,
+                name: `${firstName ?? ''} ${lastName ?? ''}`.trim(),
+                role: CUSTOMER_ROLE,
+            };
+
+            const [access_token, refresh_token] = await Promise.all([
+                this.signAccessTokenJWT(payload),
+                this.signRefreshTokenJWT(payload),
+            ]);
+
+            await newUser.updateOne({
+                refreshToken: hashTokenSHA256(refresh_token),
+            });
+
+            return { access_token, refresh_token };
+        } catch (error) {
+            this.logger.error("Google login error: " + error.message, error.stack);
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Something went wrong!');
         }

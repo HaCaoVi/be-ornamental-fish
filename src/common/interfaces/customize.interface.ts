@@ -16,13 +16,19 @@ export interface IToken {
     sub: Types.ObjectId,
     email: string,
     name: string,
-    role: {
-        _id: Types.ObjectId,
-        name: string
-    }
+    role: string,
     iat?: number,
     exp?: number
 }
+
+export interface IGoogleUser {
+    id: string,
+    email: string,
+    firstName: string,
+    lastName: string,
+    picture: string,
+    accessToken: string,
+};
 
 export interface PaginatedResult<T> {
     meta: {

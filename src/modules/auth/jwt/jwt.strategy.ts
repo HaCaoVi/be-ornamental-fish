@@ -8,7 +8,7 @@ import type { IToken } from '@common/interfaces/customize.interface';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
     constructor(
-        private configService: ConfigService,
+        private configService: ConfigService
     ) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
