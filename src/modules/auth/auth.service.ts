@@ -10,15 +10,15 @@ import { EAccountType } from '@common/types/type';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 import { MailService } from '@modules/mail/mail.service';
-import { Types } from 'mongoose';
 import { ActiveAccountDto } from './dto/active-account.dto';
 import { RegisterUserDto } from './dto/register.dto';
 import { CUSTOMER_ROLE } from '@common/constants/constant';
+import { Response } from 'express';
+import ms from 'ms';
 
 @Injectable()
 export class AuthService {
     private readonly logger = new Logger(AuthService.name);
-
     constructor(
         @InjectModel(User.name) private userModel: UserModelType,
         private jwtService: JwtService,
@@ -37,6 +37,17 @@ export class AuthService {
         return this.jwtService.sign(payload, {
             secret: this.configService.get<string>("JWT_REFRESH_TOKEN_SECRET"),
             expiresIn: this.configService.get<string>("JWT_REFRESH_EXPIRE")
+        })
+    }
+
+    addRefreshTokenInCookie(res: Response, token: string) {
+        res.clearCookie("refresh_token")
+        res.cookie('refresh_token', token, {
+            httpOnly: true,
+            secure: this.configService.get<string>("NODE_ENV") === "production",
+            maxAge: +ms(this.configService.get<string>("JWT_REFRESH_EXPIRE") as ms.StringValue),
+            sameSite: 'none',
+            path: '/',
         })
     }
 
@@ -61,7 +72,7 @@ export class AuthService {
         return isMatch ? user : null;
     }
 
-    async login(user: IToken) {
+    async login(res: Response, user: IToken) {
         try {
             const { email, name, role, sub } = user
             const access_token = await this.signAccessTokenJWT(user);
@@ -73,9 +84,10 @@ export class AuthService {
             if (updateRefreshToken.modifiedCount === 0) {
                 throw new InternalServerErrorException("Failed to update refresh token");
             }
+            this.addRefreshTokenInCookie(res, refresh_token);
 
             return {
-                refresh_token,
+                refresh_token: refresh_token,
                 access_token,
                 user: {
                     _id: sub,
@@ -102,13 +114,14 @@ export class AuthService {
         }
     }
 
-    async refreshToken(currentRefreshToken: string) {
+    async refreshToken(res: Response, currentRefreshToken: string) {
         try {
-            const user = await this.verifyRefreshTokenJWT(currentRefreshToken)
+            console.log("REFRESH>>>>", currentRefreshToken);
+            const user = await this.verifyRefreshTokenJWT(currentRefreshToken);
+            console.log(">>>>>user: ", user);
             if (!user) {
                 throw new BadRequestException('Token invalid, please login again!');
             }
-
             const { exp, iat, ...dataToken } = user
 
             const isRefreshTokenValid = await this.userModel.findOne({ _id: dataToken.sub, refreshToken: hashTokenSHA256(currentRefreshToken) })
@@ -129,6 +142,7 @@ export class AuthService {
             if (updateRefreshToken.matchedCount === 0) {
                 throw new NotFoundException("User not found");
             }
+            this.addRefreshTokenInCookie(res, newRefreshToken);
             return {
                 refresh_token: newRefreshToken,
                 access_token

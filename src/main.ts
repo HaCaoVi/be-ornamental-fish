@@ -38,7 +38,7 @@ async function bootstrap() {
       "origin": configService.get<string>("FE_ORIGIN_URL"),
       "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
       "preflightContinue": false,
-      credentials: true
+      credentials: true,
     }
   );
 

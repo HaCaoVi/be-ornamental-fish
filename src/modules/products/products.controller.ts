@@ -7,6 +7,7 @@ import { ERole } from '@common/types/type';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { QueryProductDto } from './dto/query-product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -25,10 +26,10 @@ export class ProductsController {
   @Public()
   @Get("list-product")
   findAll(
-    @Query() query: any
+    @Query() query: QueryProductDto
   ) {
     const { current, pageSize, ...filters } = query;
-    return this.productsService.findAll(+current, +pageSize, filters);
+    return this.productsService.findAll(current, pageSize, filters);
   }
 
   @Public()

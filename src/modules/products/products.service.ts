@@ -58,8 +58,8 @@ export class ProductsService {
   }
 
   async findAll(
-    current: number,
-    pageSize: number,
+    current?: number,
+    pageSize?: number,
     query: Record<string, any> = {}
   ): Promise<PaginatedResult<Product>> {
     try {

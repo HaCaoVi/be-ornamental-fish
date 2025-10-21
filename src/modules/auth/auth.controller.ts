@@ -1,13 +1,12 @@
 import { Cookies, Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
-import { Body, Controller, Get, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { AuthService } from './auth.service';
 import type { IGoogleUser, IToken } from '@common/interfaces/customize.interface';
 import { ActiveAccountDto, RetryActiveAccountDto } from './dto/active-account.dto';
 import { RegisterUserDto } from './dto/register.dto';
-import { Types } from 'mongoose';
 import { GoogleAuthGuard } from './passport/google-auth.guard';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
@@ -21,10 +20,11 @@ export class AuthController {
     @UseGuards(LocalAuthGuard)
     @Post('login')
     @ResponseMessage("Login successfully")
-    async login(
-        @UserReq() user: IToken,
+    login(
+        @Res({ passthrough: true }) res: Response,
+        @UserReq() user: IToken
     ) {
-        return this.authService.login(user);
+        return this.authService.login(res, user);
     }
 
     @Get('account')
@@ -36,13 +36,15 @@ export class AuthController {
     }
 
     @Public()
-    @Get('refresh')
+    @Post('refresh')
     @ResponseMessage("Refresh successfully")
     refreshToken(
+        @Res({ passthrough: true }) res: Response,
         @Cookies('refresh_token') refreshToken: string
     ) {
-        return this.authService.refreshToken(refreshToken)
+        return this.authService.refreshToken(res, refreshToken)
     }
+
 
     @Post('logout')
     @ResponseMessage("Logout successfully")
