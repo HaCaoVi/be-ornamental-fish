@@ -36,7 +36,7 @@ export class AuthController {
     }
 
     @Public()
-    @Post('refresh')
+    @Get('refresh')
     @ResponseMessage("Refresh successfully")
     refreshToken(
         @Res({ passthrough: true }) res: Response,

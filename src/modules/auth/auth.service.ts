@@ -46,7 +46,7 @@ export class AuthService {
             httpOnly: true,
             secure: this.configService.get<string>("NODE_ENV") === "production",
             maxAge: +ms(this.configService.get<string>("JWT_REFRESH_EXPIRE") as ms.StringValue),
-            sameSite: 'none',
+            sameSite: 'lax',
             path: '/',
         })
     }
