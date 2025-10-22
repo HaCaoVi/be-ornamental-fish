@@ -256,7 +256,7 @@ export class AuthService {
         }
     }
 
-    async loginWithGoogle(user: IGoogleUser) {
+    async loginWithGoogle(res: Response, user: IGoogleUser) {
         try {
             const { email, firstName, id, lastName, picture } = user;
 
@@ -291,7 +291,9 @@ export class AuthService {
                 refreshToken: hashTokenSHA256(refresh_token),
             });
 
-            return { access_token, refresh_token };
+            this.addRefreshTokenInCookie(res, refresh_token)
+
+            return { access_token };
         } catch (error) {
             this.logger.error("Google login error: " + error.message, error.stack);
             if (error instanceof HttpException) throw error;

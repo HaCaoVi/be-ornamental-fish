@@ -45,7 +45,6 @@ export class AuthController {
         return this.authService.refreshToken(res, refreshToken)
     }
 
-
     @Post('logout')
     @ResponseMessage("Logout successfully")
     logout(
@@ -86,7 +85,6 @@ export class AuthController {
     @UseGuards(GoogleAuthGuard)
     async googleAuth() { }
 
-    // Bước 2: Google callback
     @Public()
     @Get('google/redirect')
     @UseGuards(GoogleAuthGuard)
@@ -94,7 +92,7 @@ export class AuthController {
         @UserReq() user: IGoogleUser,
         @Res() res: Response
     ) {
-        const token = await this.authService.loginWithGoogle(user)
+        const token = await this.authService.loginWithGoogle(res, user);
         const frontendUrl = `${this.configService.get<string>("FE_ORIGIN_URL")}/auth/google-success?token=${token.access_token}`;
         return res.redirect(frontendUrl);
     }
