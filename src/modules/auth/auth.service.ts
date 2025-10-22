@@ -15,6 +15,7 @@ import { RegisterUserDto } from './dto/register.dto';
 import { CUSTOMER_ROLE } from '@common/constants/constant';
 import { Response } from 'express';
 import ms from 'ms';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -201,9 +202,6 @@ export class AuthService {
             if (!user) {
                 throw new NotFoundException(`User not found with ${email}`);
             }
-            if (user.isActivated) {
-                throw new BadRequestException("Account already activated!");
-            }
             const codeActive = uuidv4();
             const codeExpired = dayjs().add(+this.configService.get("MAIL_EXPIRE_IN"), "minute");
             const updated = await this.userModel.updateOne({ email: email, accountType: EAccountType.LOCAL }, { codeActive, codeExpired });
@@ -222,6 +220,32 @@ export class AuthService {
         }
     }
 
+    async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+        try {
+            const { code, email, password } = forgotPasswordDto;
+            const user = await this.userModel.findOne({ email, accountType: EAccountType.LOCAL });
+            if (!user) {
+                throw new NotFoundException(`User not found with ${email}`);
+            }
+            const codeExpired = dayjs(user.codeExpired);
+            const now = dayjs();
+            const isExpired = now.isAfter(codeExpired);
+            if (isExpired) {
+                throw new BadRequestException("Your code has expired!");
+            }
+            if (code !== user.codeActive) {
+                throw new BadRequestException("Your code is invalid!");
+            }
+            const hashPass = await hashBcrypt(password);
+            await user.updateOne({ password: hashPass })
+            return;
+        } catch (error) {
+            this.logger.error("Forgot password error: " + error.message, error.stack);
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Something went wrong!');
+        }
+    }
+
     async activeAccount(activeAccountDto: ActiveAccountDto) {
         try {
             const { email, code } = activeAccountDto
@@ -232,14 +256,14 @@ export class AuthService {
             if (user.isActivated) {
                 throw new BadRequestException("Account already activated!");
             }
-            if (code !== user.codeActive) {
-                throw new BadRequestException("Your code is invalid!");
-            }
             const codeExpired = dayjs(user.codeExpired);
             const now = dayjs();
             const isExpired = now.isAfter(codeExpired);
             if (isExpired) {
                 throw new BadRequestException("Your code has expired!");
+            }
+            if (code !== user.codeActive) {
+                throw new BadRequestException("Your code is invalid!");
             }
             const updated = await this.userModel.updateOne({ email: email, accountType: EAccountType.LOCAL }, { isActivated: true });
             if (updated.matchedCount === 0) {

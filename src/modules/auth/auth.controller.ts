@@ -8,6 +8,7 @@ import { RegisterUserDto } from './dto/register.dto';
 import { GoogleAuthGuard } from './passport/google-auth.guard';
 import type { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -78,6 +79,15 @@ export class AuthController {
         @Body() req: RetryActiveAccountDto
     ) {
         return this.authService.retryActive(req.email)
+    }
+
+    @Public()
+    @Patch('forgot-password')
+    @ResponseMessage("Password reset successful")
+    forgotPassword(
+        @Body() forgotPasswordDto: ForgotPasswordDto
+    ) {
+        return this.authService.forgotPassword(forgotPasswordDto)
     }
 
     @Public()
