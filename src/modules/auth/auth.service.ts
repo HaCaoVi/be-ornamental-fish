@@ -84,10 +84,10 @@ export class AuthService {
             if (updateRefreshToken.modifiedCount === 0) {
                 throw new InternalServerErrorException("Failed to update refresh token");
             }
-            this.addRefreshTokenInCookie(res, refresh_token);
+            // this.addRefreshTokenInCookie(res, refresh_token);
 
             return {
-                refresh_token: refresh_token,
+                refresh_token,
                 access_token,
                 user: {
                     _id: sub,
@@ -116,9 +116,7 @@ export class AuthService {
 
     async refreshToken(res: Response, currentRefreshToken: string) {
         try {
-            console.log("REFRESH>>>>", currentRefreshToken);
             const user = await this.verifyRefreshTokenJWT(currentRefreshToken);
-            console.log(">>>>>user: ", user);
             if (!user) {
                 throw new BadRequestException('Token invalid, please login again!');
             }
@@ -142,7 +140,7 @@ export class AuthService {
             if (updateRefreshToken.matchedCount === 0) {
                 throw new NotFoundException("User not found");
             }
-            this.addRefreshTokenInCookie(res, newRefreshToken);
+            // this.addRefreshTokenInCookie(res, newRefreshToken);
             return {
                 refresh_token: newRefreshToken,
                 access_token
