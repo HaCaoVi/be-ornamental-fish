@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { CartsService } from './carts.service';
 import { CreateCartDto } from './dto/create-cart.dto';
 import { UpdateCartDto } from './dto/update-cart.dto';
 import { ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
 import type { IToken } from '@common/interfaces/customize.interface';
+import { ParseObjectIdPipe } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 @Controller('carts')
 export class CartsController {
@@ -25,8 +27,17 @@ export class CartsController {
   }
 
   @Get("list-cart")
-  findAll() {
-    return this.cartsService.findAll();
+  findAll(
+    @UserReq() user: IToken,
+    @Query() query: any
+  ) {
+    const { current, pageSize } = query;
+    return this.cartsService.findAll(user.sub, +current, +pageSize);
+  }
+
+  @Patch('update-quantity/:id')
+  updateQuantity(@Param('id', ParseObjectIdPipe) id: Types.ObjectId, @Body() updateCartDto: UpdateCartDto) {
+    return this.cartsService.updateQuantity(id, updateCartDto);
   }
 
   @Get('view-cart/:id')
@@ -40,7 +51,7 @@ export class CartsController {
   }
 
   @Delete('delete-cart/:id')
-  remove(@Param('id') id: string) {
-    return this.cartsService.remove(+id);
+  remove(@Param('id', ParseObjectIdPipe) id: Types.ObjectId) {
+    return this.cartsService.remove(id);
   }
 }

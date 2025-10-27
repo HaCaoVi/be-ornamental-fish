@@ -1,10 +1,12 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateCartDto } from './dto/create-cart.dto';
 import { UpdateCartDto } from './dto/update-cart.dto';
 import { Cart } from './schemas/cart.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Stock } from '@modules/products/schemas/stock.schema';
+import { PaginatedResult } from '@common/interfaces/customize.interface';
+import { buildMeta } from '@common/helpers/helper';
 
 @Injectable()
 export class CartsService {
@@ -34,7 +36,7 @@ export class CartsService {
       );
       return true;
     } catch (error) {
-      this.logger.error("Create cart error: " + error.message, error.stack);
+      this.logger.error("Created cart error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
@@ -51,8 +53,73 @@ export class CartsService {
     }
   }
 
-  findAll() {
-    return `This action returns all carts`;
+  async findAll(userId: Types.ObjectId, current: number, pageSize: number): Promise<PaginatedResult<Cart>> {
+    try {
+      if (!current) current = 1;
+      if (!pageSize || pageSize > 50) pageSize = 10;
+      const skip = (current - 1) * pageSize;
+
+      const pipeline: any[] = [];
+      const baseMatch = { user: new Types.ObjectId(userId) };
+
+      pipeline.push({ $match: baseMatch });
+
+      pipeline.push(
+        {
+          $lookup: {
+            from: "products",
+            localField: "product",
+            foreignField: "_id",
+            as: "product"
+          }
+        },
+        { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: "stocks",
+            let: { productId: "$product._id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$product", "$$productId"] } } },
+              { $project: { quantity: 1, _id: 1 } }
+            ],
+            as: "product.stock"
+          }
+        },
+        { $unwind: { path: "$product.stock", preserveNullAndEmptyArrays: true } }
+      );
+      const countPipeline = [...pipeline, { $count: "total" }];
+      const countResult = await this.cartModel.aggregate(countPipeline).exec();
+      const totalItems = countResult[0]?.total || 0;
+      pipeline.push({ $skip: skip }, { $limit: pageSize });
+      const result = await this.cartModel.aggregate(pipeline).exec();
+      return {
+        meta: buildMeta(current, pageSize, totalItems),
+        result,
+      };
+    } catch (error) {
+      this.logger.error("List cart error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException("Something went wrong!");
+    }
+  }
+
+  async updateQuantity(cartId: Types.ObjectId, updateCartDto: UpdateCartDto) {
+    try {
+      const updated = await this.cartModel.updateOne({ _id: cartId }, {
+        quantity: updateCartDto.quantity
+      })
+      if (updated.matchedCount === 0) {
+        throw new NotFoundException(`Cart with id ${cartId} not found`);
+      }
+      return {
+        matchedCount: updated.matchedCount,
+        modifiedCount: updated.modifiedCount
+      };
+    } catch (error) {
+      this.logger.error("Updated cart error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException("Something went wrong!");
+    }
   }
 
   findOne(id: number) {
@@ -63,7 +130,14 @@ export class CartsService {
     return `This action updates a #${id} cart`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} cart`;
+  async remove(id: Types.ObjectId) {
+    try {
+      await this.cartModel.findByIdAndDelete(id);
+      return "ok"
+    } catch (error) {
+      this.logger.error("Updated cart error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException("Something went wrong!");
+    }
   }
 }

@@ -76,7 +76,7 @@ export class AuthService {
 
     async login(res: Response, user: IToken) {
         try {
-            const { email, name, role, sub } = user
+            const { email, name, role, sub, avatar } = user
             const access_token = await this.signAccessTokenJWT(user);
             const refresh_token = await this.signRefreshTokenJWT(user);
 
@@ -96,6 +96,7 @@ export class AuthService {
                     email,
                     name,
                     role,
+                    avatar
                 }
             };
         } catch (error) {
