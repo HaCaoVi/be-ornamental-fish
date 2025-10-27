@@ -40,16 +40,6 @@ export class CartsController {
     return this.cartsService.updateQuantity(id, updateCartDto);
   }
 
-  @Get('view-cart/:id')
-  findOne(@Param('id') id: string) {
-    return this.cartsService.findOne(+id);
-  }
-
-  @Patch('update-cart/:id')
-  update(@Param('id') id: string, @Body() updateCartDto: UpdateCartDto) {
-    return this.cartsService.update(+id, updateCartDto);
-  }
-
   @Delete('delete-cart/:id')
   remove(@Param('id', ParseObjectIdPipe) id: Types.ObjectId) {
     return this.cartsService.remove(id);

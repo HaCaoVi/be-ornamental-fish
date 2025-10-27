@@ -122,14 +122,6 @@ export class CartsService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} cart`;
-  }
-
-  update(id: number, updateCartDto: UpdateCartDto) {
-    return `This action updates a #${id} cart`;
-  }
-
   async remove(id: Types.ObjectId) {
     try {
       await this.cartModel.findByIdAndDelete(id);
