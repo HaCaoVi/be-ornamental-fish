@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { Public, ResponseMessage, Roles, UserReq } from '@common/decorators/customize.decorator';
+import { UpdateAvatarDto, UpdateUserDto } from './dto/update-user.dto';
+import { ResponseMessage, Roles, UserReq } from '@common/decorators/customize.decorator';
 import type { IToken } from '@common/interfaces/customize.interface';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
@@ -23,6 +23,7 @@ export class UsersController {
   }
 
   @Get("list-user")
+  @Roles(ERole.ADMIN, ERole.STAFF)
   findAll(
     @Query() query: any
   ) {
@@ -30,15 +31,9 @@ export class UsersController {
     return this.usersService.findAll(+current, +pageSize, filters);
   }
 
-  @Public()
-  @Get('get-user/:id')
-  findOne(@Param('id', ParseObjectIdPipe) id: Types.ObjectId) {
-    return this.usersService.findOne(id);
-  }
-
   @Patch('update-user/:id')
   @Roles(ERole.ADMIN)
-  @ResponseMessage("Updated user")
+  @ResponseMessage("Updated successfully")
   update(
     @UserReq() user: IToken,
     @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
@@ -54,5 +49,14 @@ export class UsersController {
     @UserReq() user: IToken,
     @Param('id', ParseObjectIdPipe) id: Types.ObjectId) {
     return this.usersService.remove(user, id);
+  }
+
+  @Patch('update-avatar')
+  @ResponseMessage("Updated successfully")
+  updateAvatar(
+    @UserReq() user: IToken,
+    @Body() updateAvatar: UpdateAvatarDto
+  ) {
+    return this.usersService.updateAvatar(user.sub, updateAvatar);
   }
 }

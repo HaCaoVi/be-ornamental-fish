@@ -1,4 +1,4 @@
-import { Cookies, Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
+import { Cookies, Public, ResponseMessage, Roles, UserReq } from '@common/decorators/customize.decorator';
 import { Body, Controller, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { AuthService } from './auth.service';
@@ -9,6 +9,8 @@ import { GoogleAuthGuard } from './passport/google-auth.guard';
 import type { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ERole } from '@common/types/type';
+import { ChangePasswordDto, UpdateProfileUserDto } from './dto/profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -29,7 +31,7 @@ export class AuthController {
     }
 
     @Get('account')
-    getProfile(
+    getInfo(
         @UserReq() user: IToken
     ) {
         const { iat, exp, sub, ...data } = user;
@@ -105,5 +107,30 @@ export class AuthController {
         const token = await this.authService.loginWithGoogle(res, user);
         const frontendUrl = `${this.configService.get<string>("FE_ORIGIN_URL")}/auth/google-success?token=${token.access_token}`;
         return res.redirect(frontendUrl);
+    }
+
+    @Get('view-profile')
+    viewProfile(
+        @UserReq() user: IToken,
+    ) {
+        return this.authService.viewProfile(user.sub);
+    }
+
+    @Patch('update-profile')
+    @ResponseMessage("Updated successfully")
+    updateProfile(
+        @UserReq() user: IToken,
+        @Body() updateProfileUserDto: UpdateProfileUserDto
+    ) {
+        return this.authService.updateProfile(user.sub, updateProfileUserDto);
+    }
+
+    @Patch('change-password')
+    @ResponseMessage("Updated successfully")
+    changePassword(
+        @UserReq() user: IToken,
+        @Body() changePasswordDto: ChangePasswordDto
+    ) {
+        return this.authService.changePassword(user.sub, changePasswordDto);
     }
 }

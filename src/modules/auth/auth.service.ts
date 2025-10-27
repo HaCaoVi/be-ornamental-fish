@@ -16,6 +16,8 @@ import { CUSTOMER_ROLE } from '@common/constants/constant';
 import { Response } from 'express';
 import ms from 'ms';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { Types } from 'mongoose';
+import { ChangePasswordDto, UpdateProfileUserDto } from './dto/profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -324,4 +326,72 @@ export class AuthService {
             throw new InternalServerErrorException('Something went wrong!');
         }
     }
+
+    async viewProfile(id: Types.ObjectId): Promise<User> {
+        try {
+            const user = await this.userModel
+                .findById(id)
+                .select("-password -refreshToken")
+                .populate({
+                    path: 'role',
+                    select: "_id name"
+                })
+                .lean<User>()
+                .exec();
+            if (!user) throw new NotFoundException(`User with id ${id} not found`);
+            return user;
+        } catch (error) {
+            this.logger.error("Get user error: " + error.message, error.stack);
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Something went wrong!');
+        }
+    }
+
+    async updateProfile(userId: Types.ObjectId, updateProfileUserDto: UpdateProfileUserDto) {
+        try {
+            const updated = await this.userModel.updateOne(
+                { _id: userId },
+                { ...updateProfileUserDto, updatedBy: userId },
+                { runValidators: true }
+            );
+            if (updated.matchedCount === 0) {
+                throw new NotFoundException(`User with id ${userId} not found or is protected`);
+            }
+            return {
+                matchedCount: updated.matchedCount,
+                modifiedCount: updated.modifiedCount
+            };
+        } catch (error) {
+            this.logger.error("Updated profile error: " + error.message, error.stack);
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Something went wrong!');
+        }
+    }
+
+    async changePassword(userId: Types.ObjectId, changePasswordDto: ChangePasswordDto) {
+        try {
+
+            if (changePasswordDto.oldPassword === changePasswordDto.newPassword) {
+                throw new BadRequestException('New password must be different from the old password');
+            }
+            const user = await this.userModel.findById(userId)
+            if (!user) {
+                throw new NotFoundException(`User with id ${userId} not found or is protected`);
+            };
+            const isMatch = await compareHashBcrypt(changePasswordDto.oldPassword, user.password);
+            if (!isMatch) {
+                throw new BadRequestException(`Incorrect password`);
+            };
+            const hashNewPass = await hashBcrypt(changePasswordDto.newPassword);
+            await user.updateOne(
+                { password: hashNewPass, updatedBy: userId },
+            );
+            return;
+        } catch (error) {
+            this.logger.error("Change password error: " + error.message, error.stack);
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Something went wrong!');
+        }
+    }
+
 }

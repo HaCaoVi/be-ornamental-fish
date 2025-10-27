@@ -1,12 +1,11 @@
 import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateAvatarDto, UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, type UserModelType } from './schemas/user.schema';
 import { hashBcrypt } from '@common/helpers/security.helper';
 import type { IToken, PaginatedResult } from '@common/interfaces/customize.interface';
 import { EAccountType } from '@common/types/type';
-import { buildPopulateConfigFromStrings } from '@common/helpers/mongoose-populate.helper';
 import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
 import { Types } from 'mongoose';
 import { buildMeta } from '@common/helpers/helper';
@@ -100,40 +99,16 @@ export class UsersService {
     }
   }
 
-  async findOne(id: Types.ObjectId): Promise<User> {
-    try {
-      const user = await this.userModel
-        .findById(id)
-        .select("-password -refreshToken")
-        .populate({
-          path: 'role',
-          select: "_id name"
-        })
-        .lean<User>()
-        .exec();
-      if (!user) throw new NotFoundException(`User with id ${id} not found`);
-      if (user.isBanned) throw new BadRequestException(`User with id ${id} has been banned`);
-      return user;
-    } catch (error) {
-      this.logger.error("Get user error: " + error.message, error.stack);
-      if (error instanceof HttpException) throw error;
-      throw new InternalServerErrorException('Something went wrong!');
-    }
-  }
-
   async update(author: IToken, id: Types.ObjectId, updateUserDto: UpdateUserDto) {
     try {
-      const { name, isActivated, ...rest } = updateUserDto;
       const updated = await this.userModel.updateOne(
         { _id: id, email: { $ne: this.configService.get<string>("ROOT_ADMIN_ACCOUNT") } },
-        { ...rest, name, isActivated, updatedBy: author.sub, bannedBy: rest.isBanned ? author.sub : null },
+        { ...updateUserDto, updatedBy: author.sub, bannedBy: updateUserDto.isBanned ? author.sub : null },
         { runValidators: true }
       );
-
       if (updated.matchedCount === 0) {
         throw new NotFoundException(`User with id ${id} not found or is protected`);
       }
-
       return {
         matchedCount: updated.matchedCount,
         modifiedCount: updated.modifiedCount
@@ -159,6 +134,27 @@ export class UsersService {
       };
     } catch (error) {
       this.logger.error("Deleted user error: " + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
+  }
+
+  async updateAvatar(userId: Types.ObjectId, updateAvatar: UpdateAvatarDto) {
+    try {
+      const updated = await this.userModel.updateOne(
+        { _id: userId },
+        { avatar: updateAvatar.newAvatar, updatedBy: userId },
+        { runValidators: true }
+      );
+      if (updated.matchedCount === 0) {
+        throw new NotFoundException(`User with id ${userId} not found or is protected`);
+      }
+      return {
+        matchedCount: updated.matchedCount,
+        modifiedCount: updated.modifiedCount
+      };
+    } catch (error) {
+      this.logger.error("Updated avatar error: " + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
