@@ -2,14 +2,26 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { CartsService } from './carts.service';
 import { CreateCartDto } from './dto/create-cart.dto';
 import { UpdateCartDto } from './dto/update-cart.dto';
+import { ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
+import type { IToken } from '@common/interfaces/customize.interface';
 
 @Controller('carts')
 export class CartsController {
   constructor(private readonly cartsService: CartsService) { }
 
   @Post("create-cart")
-  create(@Body() createCartDto: CreateCartDto) {
-    return this.cartsService.create(createCartDto);
+  @ResponseMessage("Added successfully")
+  create(
+    @UserReq() user: IToken,
+    @Body() createCartDto: CreateCartDto) {
+    return this.cartsService.create(user.sub, createCartDto);
+  }
+
+  @Get('count-cart')
+  countCart(
+    @UserReq() user: IToken
+  ) {
+    return this.cartsService.countCart(user.sub);
   }
 
   @Get("list-cart")

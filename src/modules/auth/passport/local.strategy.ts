@@ -24,12 +24,13 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
         if (user.isBanned) {
             throw new ForbiddenException("Your account has been banned!");
         }
-        const { _id, name, email, role } = user;
+        const { _id, name, email, role, avatar } = user;
         return {
             sub: _id,
             name,
             email,
-            role
+            role,
+            avatar
         };
     }
 }

@@ -26,7 +26,7 @@ export class AuthService {
         @InjectModel(User.name) private userModel: UserModelType,
         private jwtService: JwtService,
         private configService: ConfigService,
-        private mailService: MailService
+        private mailService: MailService,
     ) { }
 
     async signAccessTokenJWT(payload: IToken) {
@@ -70,7 +70,6 @@ export class AuthService {
     async validateUser(username: string, pass: string): Promise<any | null> {
         const user = await this.findUserByUsername(username);
         if (!user) return null;
-
         const isMatch = await compareHashBcrypt(pass, user.password);
         return isMatch ? user : null;
     }
@@ -306,6 +305,7 @@ export class AuthService {
                 email,
                 name: `${firstName ?? ''} ${lastName ?? ''}`.trim(),
                 role: CUSTOMER_ROLE,
+                avatar: newUser.avatar
             };
 
             const [access_token, refresh_token] = await Promise.all([
@@ -393,5 +393,4 @@ export class AuthService {
             throw new InternalServerErrorException('Something went wrong!');
         }
     }
-
 }

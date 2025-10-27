@@ -17,6 +17,7 @@ export interface IToken {
     email: string,
     name: string,
     role: string,
+    avatar: string,
     iat?: number,
     exp?: number
 }

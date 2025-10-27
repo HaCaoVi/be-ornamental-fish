@@ -10,6 +10,7 @@ import { JwtStrategy } from './jwt/jwt.strategy';
 import { RolesModule } from '@modules/roles/roles.module';
 import { MailModule } from '@modules/mail/mail.module';
 import { GoogleStrategy } from './passport/google.strategy';
+import { CartsModule } from '@modules/carts/carts.module';
 
 @Module({
   imports: [

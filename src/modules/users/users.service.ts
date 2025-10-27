@@ -37,7 +37,6 @@ export class UsersService {
         accountType: EAccountType.LOCAL,
         createdBy: author.sub
       })
-
       return {
         id: newUser._id,
         createdAt: newUser.createdAt

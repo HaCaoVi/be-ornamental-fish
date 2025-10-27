@@ -1,5 +1,5 @@
-import { Cookies, Public, ResponseMessage, Roles, UserReq } from '@common/decorators/customize.decorator';
-import { Body, Controller, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Cookies, Public, ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
+import { Body, Controller, Get, Patch, Post, Res, UseGuards } from '@nestjs/common';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { AuthService } from './auth.service';
 import type { IGoogleUser, IToken } from '@common/interfaces/customize.interface';
@@ -9,14 +9,14 @@ import { GoogleAuthGuard } from './passport/google-auth.guard';
 import type { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ERole } from '@common/types/type';
 import { ChangePasswordDto, UpdateProfileUserDto } from './dto/profile.dto';
+import { CartsService } from '@modules/carts/carts.service';
 
 @Controller('auth')
 export class AuthController {
     constructor(
         private authService: AuthService,
-        private configService: ConfigService
+        private configService: ConfigService,
     ) { }
 
     @Public()
@@ -31,7 +31,7 @@ export class AuthController {
     }
 
     @Get('account')
-    getInfo(
+    async getInfo(
         @UserReq() user: IToken
     ) {
         const { iat, exp, sub, ...data } = user;

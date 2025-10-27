@@ -48,7 +48,7 @@ export class ProductsService {
       try {
         await session.abortTransaction();
       } catch { }
-      this.logger.error("Created fish error: " + error.message, error.stack);
+      this.logger.error("Created product error: " + error.message, error.stack);
       if (error?.code === 11000) throw new BadRequestException("Code already exists!");
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException("Something went wrong!");
@@ -206,7 +206,7 @@ export class ProductsService {
       );
 
       if (updated.matchedCount === 0) {
-        throw new NotFoundException(`Fish with id ${productId} not found`);
+        throw new NotFoundException(`Product with id ${productId} not found`);
       }
 
       return {
@@ -214,7 +214,7 @@ export class ProductsService {
         modifiedCount: updated.modifiedCount
       };
     } catch (error) {
-      this.logger.error("Updated fish error: " + error.message, error.stack);
+      this.logger.error("Updated product error: " + error.message, error.stack);
       if (error?.code === 11000) throw new BadRequestException("Code already exists!");
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
@@ -245,7 +245,6 @@ export class ProductsService {
         isDeleted: false,
         categoryDetail: new Types.ObjectId(categoryDetailId),
         code: { $ne: code }
-
       }
 
       const data = await
@@ -263,7 +262,6 @@ export class ProductsService {
           { $skip: skip },
           { $limit: pageSize },
         ])
-
       return data
     } catch (error) {
       this.logger.error("Recommend product error: " + error.message, error.stack)
