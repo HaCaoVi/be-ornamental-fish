@@ -69,6 +69,6 @@ export class CreateProductDto {
 
     @IsNumber({}, { message: 'quantity must be a number' })
     @Min(0, { message: 'quantity cannot be less than 0' })
-    @IsNotEmpty({ message: 'origin is required' })
+    @IsNotEmpty({ message: 'quantity is required' })
     quantity: number;
 }
