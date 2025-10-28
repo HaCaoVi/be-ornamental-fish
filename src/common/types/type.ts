@@ -13,5 +13,22 @@ export enum EAccountType {
 export enum ERole {
     ADMIN = 'ADMIN',
     STAFF = 'STAFF',
-    CUSTOMER = 'CUSTOMER'
+    CUSTOMER = 'CUSTOMER',
+}
+
+export enum EStatus {
+    PENDING = "PENDING",
+    APPROVED = "APPROVED",
+    REJECTED = "REJECTED",
+}
+
+export enum EPaymentMethod {
+    COD = "COD",
+    VN_PAY = "VN_PAY",
+}
+
+export enum EPaymentStatus {
+    UNPAID = "UNPAID",
+    PAID = "PAID",
+    REFUNDED = "REFUNDED",
 }

@@ -10,10 +10,7 @@ export class Role {
     @Prop({ required: true })
     name: string;
 
-    @Prop()
     createdAt: Date;
-
-    @Prop()
     updatedAt: Date;
 }
 

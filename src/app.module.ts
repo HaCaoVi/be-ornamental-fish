@@ -11,6 +11,7 @@ import { CategoriesModule } from '@modules/categories/categories.module';
 import { ProductsModule } from '@modules/products/products.module';
 import { MailModule } from '@modules/mail/mail.module';
 import { CartsModule } from '@modules/carts/carts.module';
+import { OrdersModule } from '@modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { CartsModule } from '@modules/carts/carts.module';
     CategoriesModule,
     ProductsModule,
     MailModule,
-    CartsModule
+    CartsModule,
+    OrdersModule
   ],
   controllers: [AppController],
   providers: [AppService],
