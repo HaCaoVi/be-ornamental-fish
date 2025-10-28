@@ -1,10 +1,20 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateAvatarDto, UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, type UserModelType } from './schemas/user.schema';
 import { hashBcrypt } from '@common/helpers/security.helper';
-import type { IToken, PaginatedResult } from '@common/interfaces/customize.interface';
+import type {
+  IToken,
+  PaginatedResult,
+} from '@common/interfaces/customize.interface';
 import { EAccountType } from '@common/types/type';
 import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
 import { Types } from 'mongoose';
@@ -19,15 +29,15 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: UserModelType,
     private configService: ConfigService,
-    private roleService: RolesService
-  ) { }
+    private roleService: RolesService,
+  ) {}
 
   async create(author: IToken, createUserDto: CreateUserDto) {
     try {
-      const { password, role, ...rest } = createUserDto
+      const { password, role, ...rest } = createUserDto;
       const roleExist = await this.roleService.isRoleExist(role);
       if (!roleExist) {
-        throw new NotFoundException(`Role with id ${role} not found!`)
+        throw new NotFoundException(`Role with id ${role} not found!`);
       }
       const hashPass = await hashBcrypt(password);
       const newUser = await this.userModel.create({
@@ -35,35 +45,46 @@ export class UsersService {
         role,
         password: hashPass,
         accountType: EAccountType.LOCAL,
-        createdBy: author.sub
-      })
+        createdBy: author.sub,
+      });
       return {
         id: newUser._id,
-        createdAt: newUser.createdAt
+        createdAt: newUser.createdAt,
       };
     } catch (error) {
-      this.logger.error("Created user error: " + error.message, error.stack);
+      this.logger.error('Created user error: ' + error.message, error.stack);
       if (error?.code === 11000) {
-        throw new BadRequestException("Email already exists!");
+        throw new BadRequestException('Email already exists!');
       }
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
   }
 
-  async findAll(current: number, pageSize: number, query: Record<string, any> = {}): Promise<PaginatedResult<User>> {
+  async findAll(
+    current: number,
+    pageSize: number,
+    query: Record<string, any> = {},
+  ): Promise<PaginatedResult<User>> {
     try {
-      if (!current) current = 1
-      if (!pageSize || pageSize > 50) pageSize = 10
+      if (!current) current = 1;
+      if (!pageSize || pageSize > 50) pageSize = 10;
 
-      const { sort, filters, search } = query
-      const normalizedFilters = parseFilters(filters)
-      const normalizedSort = normalizeSort(sort, ["createdAt", "updatedAt", "email", "name"]);
+      const { sort, filters, search } = query;
+      const normalizedFilters = parseFilters(filters);
+      const normalizedSort = normalizeSort(sort, [
+        'createdAt',
+        'updatedAt',
+        'email',
+        'name',
+      ]);
 
       if (search) {
-        const regex = new RegExp(search, "i");
+        const regex = new RegExp(search, 'i');
         normalizedFilters.$or = [
-          Types.ObjectId.isValid(search) ? { _id: new Types.ObjectId(search + '') } : null,
+          Types.ObjectId.isValid(search)
+            ? { _id: new Types.ObjectId(search + '') }
+            : null,
           { name: regex },
           { email: regex },
         ].filter(Boolean);
@@ -78,42 +99,55 @@ export class UsersService {
           .skip(skip)
           .limit(pageSize)
           .sort(normalizedSort)
-          .select("-password -refreshToken")
+          .select('-password -refreshToken')
           .populate({
-            path: "role",
-            select: "_id name"
+            path: 'role',
+            select: '_id name',
           })
           .lean<User[]>()
-          .exec()
+          .exec(),
       ]);
 
       return {
         meta: buildMeta(current, pageSize, totalItems),
-        result
+        result,
       };
     } catch (error) {
-      this.logger.error("List user error: " + error.message, error.stack);
+      this.logger.error('List user error: ' + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
   }
 
-  async update(author: IToken, id: Types.ObjectId, updateUserDto: UpdateUserDto) {
+  async update(
+    author: IToken,
+    id: Types.ObjectId,
+    updateUserDto: UpdateUserDto,
+  ) {
     try {
       const updated = await this.userModel.updateOne(
-        { _id: id, email: { $ne: this.configService.get<string>("ROOT_ADMIN_ACCOUNT") } },
-        { ...updateUserDto, updatedBy: author.sub, bannedBy: updateUserDto.isBanned ? author.sub : null },
-        { runValidators: true }
+        {
+          _id: id,
+          email: { $ne: this.configService.get<string>('ROOT_ADMIN_ACCOUNT') },
+        },
+        {
+          ...updateUserDto,
+          updatedBy: author.sub,
+          bannedBy: updateUserDto.isBanned ? author.sub : null,
+        },
+        { runValidators: true },
       );
       if (updated.matchedCount === 0) {
-        throw new NotFoundException(`User with id ${id} not found or is protected`);
+        throw new NotFoundException(
+          `User with id ${id} not found or is protected`,
+        );
       }
       return {
         matchedCount: updated.matchedCount,
-        modifiedCount: updated.modifiedCount
+        modifiedCount: updated.modifiedCount,
       };
     } catch (error) {
-      this.logger.error("Updated user error: " + error.message, error.stack);
+      this.logger.error('Updated user error: ' + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
@@ -122,17 +156,23 @@ export class UsersService {
   async remove(author: IToken, id: Types.ObjectId) {
     try {
       const deleted = await this.userModel.softDeleteOne(
-        { _id: id, email: { $ne: this.configService.get<string>("ROOT_ADMIN_ACCOUNT") } }, author.sub.toString()
+        {
+          _id: id,
+          email: { $ne: this.configService.get<string>('ROOT_ADMIN_ACCOUNT') },
+        },
+        author.sub.toString(),
       );
       if (deleted.matchedCount === 0) {
-        throw new NotFoundException(`User with id ${id} not found or cannot be delete this user!`);
+        throw new NotFoundException(
+          `User with id ${id} not found or cannot be delete this user!`,
+        );
       }
       return {
         success: true,
-        _id: id
+        _id: id,
       };
     } catch (error) {
-      this.logger.error("Deleted user error: " + error.message, error.stack);
+      this.logger.error('Deleted user error: ' + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
@@ -143,17 +183,19 @@ export class UsersService {
       const updated = await this.userModel.updateOne(
         { _id: userId },
         { avatar: updateAvatar.newAvatar, updatedBy: userId },
-        { runValidators: true }
+        { runValidators: true },
       );
       if (updated.matchedCount === 0) {
-        throw new NotFoundException(`User with id ${userId} not found or is protected`);
+        throw new NotFoundException(
+          `User with id ${userId} not found or is protected`,
+        );
       }
       return {
         matchedCount: updated.matchedCount,
-        modifiedCount: updated.modifiedCount
+        modifiedCount: updated.modifiedCount,
       };
     } catch (error) {
-      this.logger.error("Updated avatar error: " + error.message, error.stack);
+      this.logger.error('Updated avatar error: ' + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }

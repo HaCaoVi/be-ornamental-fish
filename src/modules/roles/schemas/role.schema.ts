@@ -5,13 +5,13 @@ export type RoleDocument = HydratedDocument<Role>;
 
 @Schema({ timestamps: true })
 export class Role {
-    _id: Types.ObjectId
+  _id: Types.ObjectId;
 
-    @Prop({ required: true })
-    name: string;
+  @Prop({ required: true })
+  name: string;
 
-    createdAt: Date;
-    updatedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export const RoleSchema = SchemaFactory.createForClass(Role);

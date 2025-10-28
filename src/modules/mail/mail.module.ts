@@ -9,18 +9,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   imports: [
     MailerModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (config: ConfigService) => ({
+      useFactory: (config: ConfigService) => ({
         transport: {
-          host: config.get<string>("MAIL_HOST"),
+          host: config.get<string>('MAIL_HOST'),
           port: 465,
           secure: true,
           auth: {
-            user: config.get<string>("MAIL_USER"),
-            pass: config.get<string>("MAIL_PASSWORD"),
+            user: config.get<string>('MAIL_USER'),
+            pass: config.get<string>('MAIL_PASSWORD'),
           },
         },
         defaults: {
-          from: `"No Reply" <${config.get<string>("MAIL_USER")}>`,
+          from: `"No Reply" <${config.get<string>('MAIL_USER')}>`,
         },
         template: {
           dir: join(__dirname, 'templates'),
@@ -34,7 +34,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
   ],
   providers: [MailService],
-  exports: [MailService]
+  exports: [MailService],
 })
-
-export class MailModule { }
+export class MailModule {}

@@ -21,7 +21,7 @@ import { OrdersModule } from '@modules/orders/orders.module';
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (config: ConfigService) => ({
+      useFactory: (config: ConfigService) => ({
         uri: config.get<string>('DB_MONGO_URL'),
       }),
       inject: [ConfigService],
@@ -34,9 +34,9 @@ import { OrdersModule } from '@modules/orders/orders.module';
     ProductsModule,
     MailModule,
     CartsModule,
-    OrdersModule
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

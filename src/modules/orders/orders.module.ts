@@ -9,10 +9,12 @@ import { Payment, PaymentSchema } from './schemas/payment.schema';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),
-    MongooseModule.forFeature([{ name: OrderItem.name, schema: OrderItemSchema }]),
+    MongooseModule.forFeature([
+      { name: OrderItem.name, schema: OrderItemSchema },
+    ]),
     MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]),
   ],
   controllers: [OrdersController],
   providers: [OrdersService],
 })
-export class OrdersModule { }
+export class OrdersModule {}

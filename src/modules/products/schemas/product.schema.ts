@@ -9,70 +9,74 @@ export type ProductDocument = HydratedDocument<Product>;
 
 @Schema({ timestamps: true })
 export class Product {
-    _id: Types.ObjectId;
+  _id: Types.ObjectId;
 
-    @Prop({ required: true })
-    name: string;
+  @Prop({ required: true })
+  name: string;
 
-    @Prop({ required: true, unique: true })
-    code: string;
+  @Prop({ required: true, unique: true })
+  code: string;
 
-    @Prop({ required: true })
-    description: string;
+  @Prop({ required: true })
+  description: string;
 
-    @Prop({ required: true, min: 0 })
-    price: number;
+  @Prop({ required: true, min: 0 })
+  price: number;
 
-    @Prop({ default: 0 })
-    discount: number;
+  @Prop({ default: 0 })
+  discount: number;
 
-    @Prop({ required: true })
-    mainImageUrl: string;
+  @Prop({ required: true })
+  mainImageUrl: string;
 
-    @Prop({ default: null })
-    mainVideoUrl: string;
+  @Prop({ default: null })
+  mainVideoUrl: string;
 
-    @Prop({ default: false })
-    isActivated: boolean
+  @Prop({ default: false })
+  isActivated: boolean;
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "CategoryDetail", required: true })
-    categoryDetail: CategoryDetail;
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CategoryDetail',
+    required: true,
+  })
+  categoryDetail: CategoryDetail;
 
-    @Prop({ required: true })
-    origin: string
+  @Prop({ required: true })
+  origin: string;
 
-    @Prop({ default: null })
-    color: string
+  @Prop({ default: null })
+  color: string;
 
-    @Prop({ default: null })
-    size: string
+  @Prop({ default: null })
+  size: string;
 
-    @Prop({ default: null })
-    weight: string
+  @Prop({ default: null })
+  weight: string;
 
-    @Prop({ default: false })
-    isDeleted: boolean
+  @Prop({ default: false })
+  isDeleted: boolean;
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    createdBy: User;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null })
+  createdBy: User;
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    updatedBy: User;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null })
+  updatedBy: User;
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null })
-    deletedBy: User;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null })
+  deletedBy: User;
 
-    @Prop()
-    deletedAt: Date;
+  @Prop()
+  deletedAt: Date;
 
-    createdAt: Date;
+  createdAt: Date;
 
-    updatedAt: Date;
+  updatedAt: Date;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 ProductSchema.index({ isDeleted: 1, categoryDetail: 1 });
-ProductSchema.index({ name: "text" });
+ProductSchema.index({ name: 'text' });
 ProductSchema.index({ code: 1, isDeleted: 1 });
 ProductSchema.plugin(softDeletePlugin);
 export type ProductModelType = SoftDeleteModel<ProductDocument>;

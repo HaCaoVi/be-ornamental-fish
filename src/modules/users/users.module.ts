@@ -13,4 +13,4 @@ import { RolesModule } from '@modules/roles/roles.module';
   controllers: [UsersController],
   providers: [UsersService],
 })
-export class UsersModule { }
+export class UsersModule {}

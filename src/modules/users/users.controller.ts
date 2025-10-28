@@ -1,8 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateAvatarDto, UpdateUserDto } from './dto/update-user.dto';
-import { ResponseMessage, Roles, UserReq } from '@common/decorators/customize.decorator';
+import {
+  ResponseMessage,
+  Roles,
+  UserReq,
+} from '@common/decorators/customize.decorator';
 import type { IToken } from '@common/interfaces/customize.interface';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
@@ -10,53 +23,46 @@ import { ERole } from '@common/types/type';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
-  @Post("create-user")
+  @Post('create-user')
   @Roles(ERole.ADMIN)
-  @ResponseMessage("Created new user")
-  create(
-    @UserReq() user: IToken,
-    @Body() createUserDto: CreateUserDto
-  ) {
+  @ResponseMessage('Created new user')
+  create(@UserReq() user: IToken, @Body() createUserDto: CreateUserDto) {
     return this.usersService.create(user, createUserDto);
   }
 
-  @Get("list-user")
+  @Get('list-user')
   @Roles(ERole.ADMIN, ERole.STAFF)
-  findAll(
-    @Query() query: any
-  ) {
+  findAll(@Query() query: any) {
     const { current, pageSize, ...filters } = query;
     return this.usersService.findAll(+current, +pageSize, filters);
   }
 
   @Patch('update-user/:id')
   @Roles(ERole.ADMIN)
-  @ResponseMessage("Updated successfully")
+  @ResponseMessage('Updated successfully')
   update(
     @UserReq() user: IToken,
     @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
-    @Body() updateRoleDto: UpdateUserDto
+    @Body() updateRoleDto: UpdateUserDto,
   ) {
     return this.usersService.update(user, id, updateRoleDto);
   }
 
   @Delete('delete-user/:id')
   @Roles(ERole.ADMIN)
-  @ResponseMessage("Deleted user")
+  @ResponseMessage('Deleted user')
   remove(
     @UserReq() user: IToken,
-    @Param('id', ParseObjectIdPipe) id: Types.ObjectId) {
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
+  ) {
     return this.usersService.remove(user, id);
   }
 
   @Patch('update-avatar')
-  @ResponseMessage("Updated successfully")
-  updateAvatar(
-    @UserReq() user: IToken,
-    @Body() updateAvatar: UpdateAvatarDto
-  ) {
+  @ResponseMessage('Updated successfully')
+  updateAvatar(@UserReq() user: IToken, @Body() updateAvatar: UpdateAvatarDto) {
     return this.usersService.updateAvatar(user.sub, updateAvatar);
   }
 }

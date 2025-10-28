@@ -12,6 +12,6 @@ import { Stock, StockSchema } from '@modules/products/schemas/stock.schema';
   ],
   controllers: [CartsController],
   providers: [CartsService],
-  exports: [CartsService]
+  exports: [CartsService],
 })
-export class CartsModule { }
+export class CartsModule {}

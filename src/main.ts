@@ -15,14 +15,16 @@ async function bootstrap() {
   //config response data
   app.useGlobalInterceptors(new TransformInterceptor(reflector));
   //config class validation
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
-  //config auth route with jwt 
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+  //config auth route with jwt
   app.useGlobalGuards(new JwtAuthGuard(reflector));
-  //config auth route with role 
+  //config auth route with role
   app.useGlobalGuards(new RolesGuard(reflector));
   //config cookie
   app.use(cookieParser());
@@ -33,15 +35,13 @@ async function bootstrap() {
     defaultVersion: ['1'],
   });
   //config cors
-  app.enableCors(
-    {
-      "origin": configService.get<string>("FE_ORIGIN_URL"),
-      "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
-      "preflightContinue": false,
-      credentials: true,
-    }
-  );
+  app.enableCors({
+    origin: configService.get<string>('FE_ORIGIN_URL'),
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    preflightContinue: false,
+    credentials: true,
+  });
 
-  await app.listen(configService.get<string>("PORT") ?? 3000);
+  await app.listen(configService.get<string>('PORT') ?? 3000);
 }
 bootstrap();

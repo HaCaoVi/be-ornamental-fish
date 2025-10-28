@@ -1,4 +1,11 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCartDto } from './dto/create-cart.dto';
 import { UpdateCartDto } from './dto/update-cart.dto';
 import { Cart } from './schemas/cart.schema';
@@ -15,14 +22,14 @@ export class CartsService {
   constructor(
     @InjectModel(Cart.name) private cartModel: Model<Cart>,
     @InjectModel(Stock.name) private stockModel: Model<Stock>,
-  ) { }
+  ) {}
 
   async create(userId: Types.ObjectId, createCartDto: CreateCartDto) {
     try {
       const { product, quantity } = createCartDto;
       const checkStock = await this.stockModel.findOne({ product });
       if (checkStock?.quantity === 0) {
-        throw new BadRequestException("Out of stock")
+        throw new BadRequestException('Out of stock');
       }
       await this.cartModel.findOneAndUpdate(
         { user: userId, product },
@@ -36,24 +43,27 @@ export class CartsService {
       );
       return true;
     } catch (error) {
-      this.logger.error("Created cart error: " + error.message, error.stack);
+      this.logger.error('Created cart error: ' + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
   }
-
 
   async countCart(userId: Types.ObjectId) {
     try {
-      return this.cartModel.countDocuments({ user: userId })
+      return this.cartModel.countDocuments({ user: userId });
     } catch (error) {
-      this.logger.error("Count cart error: " + error.message, error.stack);
+      this.logger.error('Count cart error: ' + error.message, error.stack);
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Something went wrong!');
     }
   }
 
-  async findAll(userId: Types.ObjectId, current: number, pageSize: number): Promise<PaginatedResult<Cart>> {
+  async findAll(
+    userId: Types.ObjectId,
+    current: number,
+    pageSize: number,
+  ): Promise<PaginatedResult<Cart>> {
     try {
       if (!current) current = 1;
       if (!pageSize || pageSize > 50) pageSize = 10;
@@ -67,27 +77,29 @@ export class CartsService {
       pipeline.push(
         {
           $lookup: {
-            from: "products",
-            localField: "product",
-            foreignField: "_id",
-            as: "product"
-          }
+            from: 'products',
+            localField: 'product',
+            foreignField: '_id',
+            as: 'product',
+          },
         },
-        { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
         {
           $lookup: {
-            from: "stocks",
-            let: { productId: "$product._id" },
+            from: 'stocks',
+            let: { productId: '$product._id' },
             pipeline: [
-              { $match: { $expr: { $eq: ["$product", "$$productId"] } } },
-              { $project: { quantity: 1, _id: 1 } }
+              { $match: { $expr: { $eq: ['$product', '$$productId'] } } },
+              { $project: { quantity: 1, _id: 1 } },
             ],
-            as: "product.stock"
-          }
+            as: 'product.stock',
+          },
         },
-        { $unwind: { path: "$product.stock", preserveNullAndEmptyArrays: true } }
+        {
+          $unwind: { path: '$product.stock', preserveNullAndEmptyArrays: true },
+        },
       );
-      const countPipeline = [...pipeline, { $count: "total" }];
+      const countPipeline = [...pipeline, { $count: 'total' }];
       const countResult = await this.cartModel.aggregate(countPipeline).exec();
       const totalItems = countResult[0]?.total || 0;
       pipeline.push({ $skip: skip }, { $limit: pageSize });
@@ -97,39 +109,42 @@ export class CartsService {
         result,
       };
     } catch (error) {
-      this.logger.error("List cart error: " + error.message, error.stack);
+      this.logger.error('List cart error: ' + error.message, error.stack);
       if (error instanceof HttpException) throw error;
-      throw new InternalServerErrorException("Something went wrong!");
+      throw new InternalServerErrorException('Something went wrong!');
     }
   }
 
   async updateQuantity(cartId: Types.ObjectId, updateCartDto: UpdateCartDto) {
     try {
-      const updated = await this.cartModel.updateOne({ _id: cartId }, {
-        quantity: updateCartDto.quantity
-      })
+      const updated = await this.cartModel.updateOne(
+        { _id: cartId },
+        {
+          quantity: updateCartDto.quantity,
+        },
+      );
       if (updated.matchedCount === 0) {
         throw new NotFoundException(`Cart with id ${cartId} not found`);
       }
       return {
         matchedCount: updated.matchedCount,
-        modifiedCount: updated.modifiedCount
+        modifiedCount: updated.modifiedCount,
       };
     } catch (error) {
-      this.logger.error("Updated cart error: " + error.message, error.stack);
+      this.logger.error('Updated cart error: ' + error.message, error.stack);
       if (error instanceof HttpException) throw error;
-      throw new InternalServerErrorException("Something went wrong!");
+      throw new InternalServerErrorException('Something went wrong!');
     }
   }
 
   async remove(id: Types.ObjectId) {
     try {
       await this.cartModel.findByIdAndDelete(id);
-      return "ok"
+      return 'ok';
     } catch (error) {
-      this.logger.error("Updated cart error: " + error.message, error.stack);
+      this.logger.error('Updated cart error: ' + error.message, error.stack);
       if (error instanceof HttpException) throw error;
-      throw new InternalServerErrorException("Something went wrong!");
+      throw new InternalServerErrorException('Something went wrong!');
     }
   }
 }

@@ -6,16 +6,16 @@ import { Types } from 'mongoose';
 
 @Controller('roles')
 export class RolesController {
-  constructor(private readonly rolesService: RolesService) { }
+  constructor(private readonly rolesService: RolesService) {}
 
-  @Get("list-role")
-  @ResponseMessage("Get list role")
+  @Get('list-role')
+  @ResponseMessage('Get list role')
   findAll() {
     return this.rolesService.findAll();
   }
 
   @Get('get-role/:id')
-  @ResponseMessage("Get a role")
+  @ResponseMessage('Get a role')
   findOne(@Param('id', ParseObjectIdPipe) id: Types.ObjectId) {
     return this.rolesService.findOne(id);
   }

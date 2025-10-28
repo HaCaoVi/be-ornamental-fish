@@ -1,34 +1,34 @@
 export enum EGender {
-    Male = 'MALE',
-    Female = 'FEMALE',
-    Other = 'OTHER',
+  Male = 'MALE',
+  Female = 'FEMALE',
+  Other = 'OTHER',
 }
 
 export enum EAccountType {
-    LOCAL = 'LOCAL',
-    GOOGLE = 'GOOGLE',
-    FACEBOOK = 'FACEBOOK',
+  LOCAL = 'LOCAL',
+  GOOGLE = 'GOOGLE',
+  FACEBOOK = 'FACEBOOK',
 }
 
 export enum ERole {
-    ADMIN = 'ADMIN',
-    STAFF = 'STAFF',
-    CUSTOMER = 'CUSTOMER',
+  ADMIN = 'ADMIN',
+  STAFF = 'STAFF',
+  CUSTOMER = 'CUSTOMER',
 }
 
 export enum EStatus {
-    PENDING = "PENDING",
-    APPROVED = "APPROVED",
-    REJECTED = "REJECTED",
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
 }
 
 export enum EPaymentMethod {
-    COD = "COD",
-    VN_PAY = "VN_PAY",
+  COD = 'COD',
+  VN_PAY = 'VN_PAY',
 }
 
 export enum EPaymentStatus {
-    UNPAID = "UNPAID",
-    PAID = "PAID",
-    REFUNDED = "REFUNDED",
+  UNPAID = 'UNPAID',
+  PAID = 'PAID',
+  REFUNDED = 'REFUNDED',
 }

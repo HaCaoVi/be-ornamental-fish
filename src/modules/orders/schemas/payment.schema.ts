@@ -6,19 +6,19 @@ export type PaymentDocument = HydratedDocument<Payment>;
 
 @Schema({ timestamps: true })
 export class Payment {
-    _id: Types.ObjectId
+  _id: Types.ObjectId;
 
-    @Prop({ required: true, enum: EPaymentMethod })
-    method: string;
+  @Prop({ required: true, enum: EPaymentMethod })
+  method: string;
 
-    @Prop({ required: true, enum: EPaymentStatus })
-    status: string;
+  @Prop({ required: true, enum: EPaymentStatus })
+  status: string;
 
-    @Prop({ default: null })
-    transactionId: string;
+  @Prop({ default: null })
+  transactionId: string;
 
-    createdAt: Date;
-    updatedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);

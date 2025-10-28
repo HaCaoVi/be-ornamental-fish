@@ -7,7 +7,9 @@ import { Bucket } from '@google-cloud/storage';
 @Injectable()
 export class FilesService {
   private bucket: Bucket;
-  constructor(@Inject('FIREBASE_APP') private readonly firebaseApp: admin.app.App) {
+  constructor(
+    @Inject('FIREBASE_APP') private readonly firebaseApp: admin.app.App,
+  ) {
     this.bucket = this.firebaseApp.storage().bucket();
   }
 
@@ -21,12 +23,16 @@ export class FilesService {
     }
   }
 
-  async uploadImage(file: Express.Multer.File, folderName: string, oldFileName: string) {
+  async uploadImage(
+    file: Express.Multer.File,
+    folderName: string,
+    oldFileName: string,
+  ) {
     const filename = `files/images/${folderName}/${uuidv4()}-${Date.now()}-${file.originalname}`;
     const fileRef = this.bucket.file(filename);
 
     if (oldFileName && oldFileName.length > 0) {
-      this.deleteFile(oldFileName)
+      this.deleteFile(oldFileName);
     }
 
     await fileRef.save(file.buffer, {
@@ -40,12 +46,16 @@ export class FilesService {
     };
   }
 
-  async uploadVideo(file: Express.Multer.File, folderName: string, oldFileName: string) {
+  async uploadVideo(
+    file: Express.Multer.File,
+    folderName: string,
+    oldFileName: string,
+  ) {
     const filename = `files/videos/${folderName}/${uuidv4()}-${Date.now()}-${file.originalname}`;
     const fileRef = this.bucket.file(filename);
 
     if (oldFileName && oldFileName.length > 0) {
-      this.deleteFile(oldFileName)
+      this.deleteFile(oldFileName);
     }
 
     await fileRef.save(file.buffer, {

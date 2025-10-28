@@ -6,19 +6,19 @@ export type StockDocument = HydratedDocument<Stock>;
 
 @Schema({ timestamps: true })
 export class Stock {
-    _id: Types.ObjectId
+  _id: Types.ObjectId;
 
-    @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, })
-    product: Product;
+  @Prop({ required: true, type: mongoose.Schema.Types.ObjectId })
+  product: Product;
 
-    @Prop({ required: true, min: 0 })
-    quantity: number;
+  @Prop({ required: true, min: 0 })
+  quantity: number;
 
-    @Prop({ default: 0, min: 0 })
-    sold: number;
+  @Prop({ default: 0, min: 0 })
+  sold: number;
 
-    createdAt: Date;
-    updatedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export const StockSchema = SchemaFactory.createForClass(Stock);
