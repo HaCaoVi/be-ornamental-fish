@@ -16,7 +16,7 @@ export class Order {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "Payment", required: true })
     payment: Payment;
 
-    @Prop({ required: true })
+    @Prop({ required: true, unique: true })
     code: string;
 
     @Prop({ required: true })
