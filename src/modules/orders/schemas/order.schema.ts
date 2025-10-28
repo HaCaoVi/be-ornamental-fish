@@ -20,6 +20,9 @@ export class Order {
   })
   payment: Payment;
 
+  @Prop({ required: true })
+  fullname: string;
+
   @Prop({ required: true, unique: true })
   code: string;
 
