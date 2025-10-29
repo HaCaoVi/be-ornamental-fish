@@ -45,14 +45,20 @@ export class Product {
   @Prop({ required: true })
   origin: string;
 
-  @Prop({ default: null })
+  @Prop({ required: true })
   color: string;
 
-  @Prop({ default: null })
-  size: string;
+  @Prop({ required: true, min: 0 }) // cm
+  length: number;
 
-  @Prop({ default: null })
-  weight: string;
+  @Prop({ required: true, min: 0 }) // cm
+  width: number;
+
+  @Prop({ required: true, min: 0 }) // cm
+  height: number;
+
+  @Prop({ required: true, min: 0 }) // gram
+  weight: number;
 
   @Prop({ default: false })
   isDeleted: boolean;

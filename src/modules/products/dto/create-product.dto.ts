@@ -50,19 +50,27 @@ export class CreateProductDto {
   isActivated?: boolean;
 
   @IsString({ message: 'color must be a string' })
-  @IsOptional()
+  @IsNotEmpty({ message: 'color is required' })
   color: string;
 
   @IsString({ message: 'origin must be a string' })
   @IsNotEmpty({ message: 'origin is required' })
   origin: string;
 
-  @IsString({ message: 'size must be a string' })
-  @IsOptional()
-  size: string;
+  @IsString({ message: 'height must be a string' })
+  @IsNotEmpty({ message: 'height is required' })
+  height: string;
+
+  @IsString({ message: 'length must be a string' })
+  @IsNotEmpty({ message: 'length is required' })
+  length: string;
+
+  @IsString({ message: 'width must be a string' })
+  @IsNotEmpty({ message: 'width is required' })
+  width: string;
 
   @IsString({ message: 'weight must be a string' })
-  @IsOptional()
+  @IsNotEmpty({ message: 'weight is required' })
   weight: string;
 
   @IsNumber({}, { message: 'quantity must be a number' })
