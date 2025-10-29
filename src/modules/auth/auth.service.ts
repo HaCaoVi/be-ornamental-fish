@@ -38,7 +38,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private mailService: MailService,
-  ) {}
+  ) { }
 
   async signAccessTokenJWT(payload: IToken) {
     return this.jwtService.sign(payload, {
@@ -76,8 +76,8 @@ export class AuthService {
       })
       .lean<User>()
       .exec();
-    const dataConfig = { ...user, role: user!.role.name };
-    return dataConfig ?? null;
+    if (!user) return null;
+    return { ...user, role: user!.role.name };
   }
 
   async validateUser(username: string, pass: string): Promise<any | null> {

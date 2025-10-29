@@ -12,6 +12,7 @@ import { ProductsModule } from '@modules/products/products.module';
 import { MailModule } from '@modules/mail/mail.module';
 import { CartsModule } from '@modules/carts/carts.module';
 import { OrdersModule } from '@modules/orders/orders.module';
+import { GhnModule } from '@modules/ghn/ghn.module';
 
 @Module({
   imports: [
@@ -35,8 +36,9 @@ import { OrdersModule } from '@modules/orders/orders.module';
     MailModule,
     CartsModule,
     OrdersModule,
+    GhnModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

@@ -6,6 +6,13 @@ export interface Response<T> {
   data: T;
 }
 
+export interface ResponseGHN<T> {
+  code: number,
+  message: string,
+  data: T
+  code_message?: string
+}
+
 export interface SoftDeleteModel<T> extends Model<T> {
   softDeleteOne(filter: any, deletedBy?: string): Promise<any>;
   softDeleteMany(filter: any, deletedBy?: string): Promise<any>;
