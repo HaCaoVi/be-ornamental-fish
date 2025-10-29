@@ -1,11 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Order } from './schemas/order.schema';
 
 @Injectable()
 export class OrdersService {
-  create(createOrderDto: CreateOrderDto) {
-    return 'This action adds a new order';
+  private readonly logger = new Logger(OrdersService.name);
+  constructor(
+    @InjectModel(Order.name) private userModel: Model<Order>,
+  ) { }
+
+  async checkStockProduct() {
+
+  }
+
+  async create(userId: Types.ObjectId, createOrderDto: CreateOrderDto) {
+    try {
+      const { orderItems, payment, ...rest } = createOrderDto;
+
+    } catch (error) {
+      this.logger.error('Created order error: ' + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
   }
 
   findAll() {

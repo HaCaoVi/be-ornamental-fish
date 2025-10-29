@@ -32,7 +32,7 @@ export class ProductsService {
     @InjectModel(Stock.name) private stockModel: Model<Stock>,
     @Inject(forwardRef(() => CategoriesService))
     private categoryService: CategoriesService,
-  ) {}
+  ) { }
 
   async countProductHasCategoryDetailId(categoryDetailId: Types.ObjectId) {
     return this.productModel.countDocumentsSoftDelete({
@@ -67,7 +67,7 @@ export class ProductsService {
     } catch (error) {
       try {
         await session.abortTransaction();
-      } catch {}
+      } catch { }
       this.logger.error('Created product error: ' + error.message, error.stack);
       if (error?.code === 11000)
         throw new BadRequestException('Code already exists!');
@@ -232,7 +232,7 @@ export class ProductsService {
     updateFishDto: UpdateProductDto,
   ) {
     try {
-      const { categoryDetail, ...rest } = updateFishDto;
+      const { categoryDetail, quantity, ...rest } = updateFishDto;
 
       if (categoryDetail) {
         const exist =
@@ -248,6 +248,10 @@ export class ProductsService {
         { ...rest, updatedBy: author.sub },
         { runValidators: true },
       );
+
+      if (quantity) {
+        await this.stockModel.updateOne({ product: productId }, { quantity })
+      }
 
       if (updated.matchedCount === 0) {
         throw new NotFoundException(`Product with id ${productId} not found`);

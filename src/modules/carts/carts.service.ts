@@ -22,7 +22,7 @@ export class CartsService {
   constructor(
     @InjectModel(Cart.name) private cartModel: Model<Cart>,
     @InjectModel(Stock.name) private stockModel: Model<Stock>,
-  ) {}
+  ) { }
 
   async create(userId: Types.ObjectId, createCartDto: CreateCartDto) {
     try {
@@ -117,11 +117,14 @@ export class CartsService {
 
   async updateQuantity(cartId: Types.ObjectId, updateCartDto: UpdateCartDto) {
     try {
+      const { product, quantity } = updateCartDto;
+      const checkStock = await this.stockModel.findOne({ product: product })
+      if (!checkStock || checkStock.quantity <= 0) {
+        throw new BadRequestException("Insufficient stock!")
+      }
       const updated = await this.cartModel.updateOne(
         { _id: cartId },
-        {
-          quantity: updateCartDto.quantity,
-        },
+        { quantity },
       );
       if (updated.matchedCount === 0) {
         throw new NotFoundException(`Cart with id ${cartId} not found`);
