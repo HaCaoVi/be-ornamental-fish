@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EPaymentMethod } from '@common/types/type';
+import { AddressDto } from '@modules/users/dto/create-user.dto';
 
 export class CreateOrderItemDto {
     @IsString({ message: 'name must be a string' })
@@ -54,12 +55,10 @@ export class CreateOrderDto {
     @IsNotEmpty({ message: 'phone cannot be empty' })
     phone: string;
 
-    @IsString({ message: 'address must be a string' })
-    @Matches(/^[^-]+-\d+-\w+$/, {
-        message: 'Address must be in format "provinceId-toDistrictId-toWardCode"'
-    })
-    @IsNotEmpty({ message: 'address cannot be empty' })
-    address: string;
+    @ValidateNested()
+    @Type(() => AddressDto)
+    @IsNotEmpty({ message: 'address is required!' })
+    address: AddressDto;
 
     @IsOptional()
     @IsString({ message: 'note must be a string' })

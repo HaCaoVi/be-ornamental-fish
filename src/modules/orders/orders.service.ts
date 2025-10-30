@@ -11,6 +11,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { OrderItem } from './schemas/order-item.schema';
 import { EPaymentStatus } from '@common/types/type';
 import { CartsService } from '@modules/carts/carts.service';
+import { PaginatedResult } from '@common/interfaces/customize.interface';
+import { buildMeta } from '@common/helpers/helper';
 
 @Injectable()
 export class OrdersService {
@@ -48,7 +50,7 @@ export class OrdersService {
       const products = checkStock ? checkStock?.map(e => e.product) : []
       if (!products.length) throw new BadRequestException('No valid products found.');
 
-      const [__, toDistrictIdStr, toWardCode] = rest.address.split("-");
+      const [__, toDistrictIdStr, toWardCode] = rest.address.code.split("-");
 
       const [paymentItem, ghnShipping] = await Promise.all([
         this.paymentModel.create([{ ...payment, status: EPaymentStatus.UNPAID }], { session }),
@@ -100,6 +102,89 @@ export class OrdersService {
 
   findAll() {
     return `This action returns all orders`;
+  }
+
+  async findAllOfUser(
+    userId: Types.ObjectId,
+    current: number,
+    pageSize: number,
+  ): Promise<PaginatedResult<Order[]>> {
+    try {
+      if (!current) current = 1;
+      if (!pageSize || pageSize > 50) pageSize = 10;
+      const skip = (current - 1) * pageSize;
+
+      const pipeline: any[] = [];
+      const baseMatch = { user: new Types.ObjectId(userId) };
+
+      pipeline.push({ $match: baseMatch });
+
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'payments',
+            localField: 'payment',
+            foreignField: '_id',
+            as: 'payment',
+          },
+        },
+        { $unwind: { path: '$payment', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'orderitems',
+            let: { orderId: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ['$order', '$$orderId'] },
+                },
+              },
+              {
+                $lookup: {
+                  from: 'products',
+                  localField: 'product',
+                  foreignField: '_id',
+                  as: 'product',
+                },
+              },
+              {
+                $unwind: {
+                  path: '$product',
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  product: {
+                    _id: 1,
+                    name: 1,
+                    mainImageUrl: 1,
+                  },
+                  quantity: 1,
+                  price: 1,
+                  discount: 1,
+                },
+              },
+            ],
+            as: 'orderItems',
+          },
+        }
+      );
+      const countPipeline = [...pipeline, { $count: 'total' }];
+      const countResult = await this.orderModel.aggregate(countPipeline).exec();
+      const totalItems = countResult[0]?.total || 0;
+      pipeline.push({ $skip: skip }, { $limit: pageSize });
+      const result = await this.orderModel.aggregate(pipeline).exec();
+      return {
+        meta: buildMeta(current, pageSize, totalItems),
+        result,
+      };
+    } catch (error) {
+      this.logger.error('List order error: ' + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
   }
 
   findOne(id: number) {

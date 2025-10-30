@@ -29,8 +29,14 @@ export class Order {
   @Prop({ required: true })
   phone: string;
 
-  @Prop({ required: true })
-  address: string;
+  @Prop({
+    type: {
+      code: { type: String },
+      location: { type: String },
+    },
+    _id: false,
+  })
+  address: { code: string; location: string };
 
   @Prop({ default: null })
   note: string;

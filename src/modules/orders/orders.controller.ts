@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -26,16 +27,19 @@ export class OrdersController {
     return this.ordersService.create(user.sub, createOrderDto);
   }
 
-  @Get()
-  findAll() {
+  @Get("list order")
+  findAll(
+
+  ) {
     return this.ordersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ordersService.findOne(+id);
+  @Get('list-order-of-user')
+  findAllOfUser(
+    @UserReq() user: IToken, @Query() query: any) {
+    const { current, pageSize } = query;
+    return this.ordersService.findAllOfUser(user.sub, +current, +pageSize);
   }
-
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
     return this.ordersService.update(+id, updateOrderDto);

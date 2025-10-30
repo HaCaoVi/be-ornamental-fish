@@ -8,11 +8,22 @@ import {
   IsOptional,
   IsString,
   Length,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsPastDate } from '@common/decorators/validate.decorator';
 import { EGender } from '@common/types/type';
 import { Types } from 'mongoose';
+
+export class AddressDto {
+  @IsString({ message: 'code must be a string' })
+  @IsNotEmpty({ message: 'address.code is required!' })
+  code: string;
+
+  @IsString({ message: 'location must be a string' })
+  @IsNotEmpty({ message: 'address.location is required!' })
+  location: string;
+}
 
 export class CreateUserDto {
   @IsString({ message: 'name must be a string' })
@@ -40,9 +51,10 @@ export class CreateUserDto {
   @IsEnum(EGender, { message: 'gender must be MALE, FEMALE, or OTHER' })
   gender: EGender;
 
-  @IsString({ message: 'address must be a string' })
+  @ValidateNested()
+  @Type(() => AddressDto)
   @IsNotEmpty({ message: 'address is required!' })
-  address: string;
+  address: AddressDto;
 
   @IsNotEmpty({ message: 'role is required!' })
   @IsMongoId({ message: 'role must be a valid ObjectId!' })

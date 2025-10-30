@@ -35,8 +35,14 @@ export class User {
   })
   gender: string;
 
-  @Prop()
-  address: string;
+  @Prop({
+    type: {
+      code: { type: String },
+      location: { type: String },
+    },
+    _id: false,
+  })
+  address: { code: string; location: string };
 
   @Prop({
     default: EAccountType.LOCAL,
