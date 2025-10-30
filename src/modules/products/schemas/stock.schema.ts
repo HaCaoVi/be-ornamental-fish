@@ -8,7 +8,11 @@ export type StockDocument = HydratedDocument<Stock>;
 export class Stock {
   _id: Types.ObjectId;
 
-  @Prop({ required: true, type: mongoose.Schema.Types.ObjectId })
+  @Prop({
+    required: true,
+    ref: 'Product',
+    type: mongoose.Schema.Types.ObjectId
+  })
   product: Product;
 
   @Prop({ required: true, min: 0 })

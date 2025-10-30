@@ -29,8 +29,8 @@ export class OrderItem {
   @Prop({ default: 0 })
   discount: number;
 
-  @Prop({ required: true })
-  quantity: string;
+  @Prop({ required: true, min: 0 })
+  quantity: number;
 
   createdAt: Date;
   updatedAt: Date;

@@ -5,8 +5,7 @@ import { AxiosError } from 'axios';
 import { HttpService } from '@nestjs/axios';
 import type { ResponseGHN } from '@common/interfaces/customize.interface';
 import { ConfigService } from '@nestjs/config';
-import { Product, type ProductModelType } from '@modules/products/schemas/product.schema';
-import { InjectModel } from '@nestjs/mongoose';
+import { ProductsService } from '@modules/products/products.service';
 
 @Injectable()
 export class GhnService {
@@ -14,66 +13,14 @@ export class GhnService {
   constructor(
     private readonly httpService: HttpService,
     private configService: ConfigService,
-    @InjectModel(Product.name) private productModel: ProductModelType,
+    private productService: ProductsService,
   ) { }
-
-  async calculateProductList(listProductOrder: ProductOrder[]) {
-    try {
-      const productIds = listProductOrder.map((item) => item.productId);
-
-      const productList = await this.productModel
-        .find({ _id: { $in: productIds } })
-        .select('price discount height length width weight')
-        .lean<Product[]>()
-        .exec();
-
-      if (productList.length === 0) {
-        return {
-          height: 0,
-          length: 0,
-          width: 0,
-          weight: 0,
-          total: 0,
-        };
-      }
-
-      const quantityMap = new Map(
-        listProductOrder.map((item) => [item.productId, item.quantity]),
-      );
-
-      const summary = productList.reduce(
-        (acc, p) => {
-          const quantity = quantityMap.get(String(p._id)) || 1;
-          const discount = Math.min(Math.max(p.discount || 0, 0), 100);
-          const priceAfterDiscount = p.price - (p.price * discount) / 100;
-
-          return {
-            height: acc.height + Math.max(p.height, 0) * quantity,
-            length: acc.length + Math.max(p.length, 0) * quantity,
-            width: acc.width + Math.max(p.width, 0) * quantity,
-            weight: acc.weight + Math.max(p.weight, 0) * quantity,
-            total: acc.total + priceAfterDiscount * quantity,
-          };
-        },
-        { height: 0, length: 0, width: 0, weight: 0, total: 0 },
-      );
-      return summary
-    } catch (error) {
-      console.error('Error calculating product list:', error);
-      return {
-        height: 0,
-        length: 0,
-        width: 0,
-        weight: 0,
-        total: 0,
-      };
-    }
-  }
 
   async shippingFee(shippingFeeGhnDto: ShippingFeeGhnDto) {
     const { toWardCode, toDistrictId, listProductOrder } = shippingFeeGhnDto;
 
-    const { height, length, total, width, weight } = await this.calculateProductList(listProductOrder)
+    const { height, length, total, width, weight } = await this.productService.calculateProductList(listProductOrder)
+    console.log("height, length, total, width, weight>>>>>", height, length, total, width, weight);
 
     const { data } = await firstValueFrom(
       this.httpService.post<ResponseGHN<any>>('/v2/shipping-order/fee', {
@@ -99,7 +46,7 @@ export class GhnService {
     if (data.code !== 200) {
       throw new BadRequestException(data.message || 'GHN API returned an error');
     }
-    return data.data;
+    return { ...data.data, totalAmount: total };
   }
 
 

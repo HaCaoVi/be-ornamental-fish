@@ -5,6 +5,7 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Product, ProductSchema } from '@modules/products/schemas/product.schema';
+import { ProductsModule } from '@modules/products/products.module';
 
 @Module({
   imports: [
@@ -22,9 +23,10 @@ import { Product, ProductSchema } from '@modules/products/schemas/product.schema
       }),
       inject: [ConfigService],
     }),
-    MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]),
+    ProductsModule
   ],
   controllers: [GhnController],
   providers: [GhnService],
+  exports: [GhnService]
 })
 export class GhnModule { }

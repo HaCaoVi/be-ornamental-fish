@@ -15,12 +15,14 @@ import type {
   IToken,
   PaginatedResult,
 } from '@common/interfaces/customize.interface';
-import { Connection, Model, Types } from 'mongoose';
+import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { Stock } from './schemas/stock.schema';
 import { CategoriesService } from '@modules/categories/categories.service';
 import { buildMeta } from '@common/helpers/helper';
 import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { ProductOrder } from '@modules/ghn/dto/create-ghn.dto';
+import { CreateOrderItemDto } from '@modules/orders/dto/create-order.dto';
 
 @Injectable()
 export class ProductsService {
@@ -328,4 +330,87 @@ export class ProductsService {
       throw new InternalServerErrorException('Something went wrong!');
     }
   }
+
+  async findListProductByListProductId(productIds: string[]) {
+    return this.productModel
+      .find({ _id: { $in: productIds } })
+      .select('price discount height length width weight')
+      .lean<Product[]>()
+      .exec();
+  }
+
+  async calculateProductList(listProductOrder: ProductOrder[]) {
+    try {
+      const productIds = listProductOrder.map((item) => item.productId);
+
+      const productList = await this.findListProductByListProductId(productIds)
+
+      if (productList.length === 0) {
+        return {
+          height: 0,
+          length: 0,
+          width: 0,
+          weight: 0,
+          total: 0,
+        };
+      }
+
+      const quantityMap = new Map(
+        listProductOrder.map((item) => [item.productId, item.quantity]),
+      );
+      const summary = productList.reduce(
+        (acc, p) => {
+          return {
+            height: Math.max(acc.height, p.height || 0),
+            length: Math.max(acc.length, p.length || 0),
+            width: Math.max(acc.width, p.width || 0),
+            weight: acc.weight + (p.weight || 0) * (quantityMap.get(String(p._id)) || 1),
+            total: acc.total + (p.price - p.discount) * (quantityMap.get(String(p._id)) || 1),
+          };
+        },
+        { height: 0, length: 0, width: 0, weight: 0, total: 0 },
+      );
+      return summary
+    } catch (error) {
+      console.error('Error calculating product list:', error);
+      return {
+        height: 0,
+        length: 0,
+        width: 0,
+        weight: 0,
+        total: 0,
+      };
+    }
+  }
+
+  async checkStockByListProduct(listProductId: string[]) {
+    return this.stockModel
+      .find({ product: { $in: listProductId } })
+      .select('quantity product _id')
+      .populate("product")
+      .lean<Stock[]>()
+      .exec();
+  }
+
+  async checkStock(productId: string) {
+    return this.stockModel.findOne({
+      product: productId
+    })
+  }
+
+  async checkNameProduct(productId: string) {
+    return this.productModel.findById(productId)
+  }
+
+  async updateQuantity(orderItems: CreateOrderItemDto[], session?: ClientSession) {
+    const bulkOps = orderItems.map(item => ({
+      updateOne: {
+        filter: { product: item.productId },
+        update: { $inc: { quantity: -item.quantity } },
+      },
+    }));
+    if (!bulkOps.length) return;
+    await this.stockModel.bulkWrite(bulkOps, { session });
+  }
+
 }
