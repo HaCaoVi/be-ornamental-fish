@@ -7,6 +7,7 @@ import { OrderItem, OrderItemSchema } from './schemas/order-item.schema';
 import { Payment, PaymentSchema } from './schemas/payment.schema';
 import { ProductsModule } from '@modules/products/products.module';
 import { GhnModule } from '@modules/ghn/ghn.module';
+import { CartsModule } from '@modules/carts/carts.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { GhnModule } from '@modules/ghn/ghn.module';
     ]),
     MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]),
     ProductsModule,
-    GhnModule
+    GhnModule,
+    CartsModule
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

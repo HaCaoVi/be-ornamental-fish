@@ -10,7 +10,7 @@ import {
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
-import { UserReq } from '@common/decorators/customize.decorator';
+import { ResponseMessage, UserReq } from '@common/decorators/customize.decorator';
 import type { IToken } from '@common/interfaces/customize.interface';
 
 @Controller('orders')
@@ -18,6 +18,7 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) { }
 
   @Post("create-order")
+  @ResponseMessage("Created successfully")
   create(
     @UserReq() user: IToken,
     @Body() createOrderDto: CreateOrderDto

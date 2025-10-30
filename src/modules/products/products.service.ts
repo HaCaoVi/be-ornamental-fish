@@ -405,12 +405,22 @@ export class ProductsService {
   async updateQuantity(orderItems: CreateOrderItemDto[], session?: ClientSession) {
     const bulkOps = orderItems.map(item => ({
       updateOne: {
-        filter: { product: item.productId },
-        update: { $inc: { quantity: -item.quantity } },
+        filter: {
+          product: item.productId,
+          quantity: { $gte: item.quantity }
+        },
+        update: {
+          $inc: { quantity: -item.quantity },
+        },
       },
     }));
-    if (!bulkOps.length) return;
-    await this.stockModel.bulkWrite(bulkOps, { session });
+
+    const result = await this.stockModel.bulkWrite(bulkOps, { session });
+
+    const modifiedCount = result.modifiedCount ?? 0;
+    if (modifiedCount < orderItems.length) {
+      throw new BadRequestException('Some products are out of stock or have been updated concurrently.');
+    }
   }
 
 }

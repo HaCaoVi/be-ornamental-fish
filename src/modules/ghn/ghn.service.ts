@@ -20,7 +20,6 @@ export class GhnService {
     const { toWardCode, toDistrictId, listProductOrder } = shippingFeeGhnDto;
 
     const { height, length, total, width, weight } = await this.productService.calculateProductList(listProductOrder)
-    console.log("height, length, total, width, weight>>>>>", height, length, total, width, weight);
 
     const { data } = await firstValueFrom(
       this.httpService.post<ResponseGHN<any>>('/v2/shipping-order/fee', {
@@ -48,7 +47,6 @@ export class GhnService {
     }
     return { ...data.data, totalAmount: total };
   }
-
 
   async findAllProvince() {
     const { data } = await firstValueFrom(
@@ -101,5 +99,4 @@ export class GhnService {
     }
     return data.data;
   }
-
 }

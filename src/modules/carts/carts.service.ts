@@ -150,4 +150,14 @@ export class CartsService {
       throw new InternalServerErrorException('Something went wrong!');
     }
   }
+
+  async clearCart(listCardId: string[]) {
+    try {
+      return this.cartModel.deleteMany({ _id: { $in: listCardId } })
+    } catch (error) {
+      this.logger.error('clear cart error: ' + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
+  }
 }

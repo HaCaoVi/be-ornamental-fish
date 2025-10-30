@@ -10,6 +10,7 @@ import {
     ArrayMinSize,
     IsEnum,
     Matches,
+    IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EPaymentMethod } from '@common/types/type';
@@ -68,4 +69,9 @@ export class CreateOrderDto {
     @Type(() => CreateOrderItemDto)
     @ArrayMinSize(1, { message: 'There must be at least one product in the order' })
     orderItems: CreateOrderItemDto[];
+
+    @IsArray({ message: 'listCartId must be an array' })
+    @ArrayMinSize(1, { message: 'listCartId must contain at least one cart' })
+    @IsMongoId({ each: true, message: 'Each cart ID must be a valid MongoId' })
+    listCartId: string[];
 }

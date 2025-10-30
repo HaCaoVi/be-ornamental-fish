@@ -10,6 +10,7 @@ import { GhnService } from '@modules/ghn/ghn.service';
 import { v4 as uuidv4 } from 'uuid';
 import { OrderItem } from './schemas/order-item.schema';
 import { EPaymentStatus } from '@common/types/type';
+import { CartsService } from '@modules/carts/carts.service';
 
 @Injectable()
 export class OrdersService {
@@ -19,7 +20,8 @@ export class OrdersService {
     @InjectModel(Payment.name) private paymentModel: Model<Payment>,
     @InjectModel(OrderItem.name) private orderItemModel: Model<OrderItem>,
     private productService: ProductsService,
-    private ghnService: GhnService
+    private ghnService: GhnService,
+    private cartService: CartsService
   ) { }
 
   async checkStockProduct(orderItems: CreateOrderItemDto[]) {
@@ -37,12 +39,11 @@ export class OrdersService {
     return stocks;
   }
 
-
   async create(userId: Types.ObjectId, createOrderDto: CreateOrderDto) {
     const session = await this.orderModel.db.startSession();
     session.startTransaction();
     try {
-      const { orderItems, payment, ...rest } = createOrderDto;
+      const { orderItems, payment, listCartId, ...rest } = createOrderDto;
       const checkStock = await this.checkStockProduct(orderItems);
       const products = checkStock ? checkStock?.map(e => e.product) : []
       if (!products.length) throw new BadRequestException('No valid products found.');
@@ -84,7 +85,7 @@ export class OrdersService {
       const createdOrderItems = await this.orderItemModel.insertMany(orderItemDocs, { session });
 
       await this.productService.updateQuantity(orderItems, session);
-
+      await this.cartService.clearCart(listCartId)
       await session.commitTransaction();
       return { order, orderItems: createdOrderItems };
     } catch (error) {
@@ -96,7 +97,6 @@ export class OrdersService {
       session.endSession();
     }
   }
-
 
   findAll() {
     return `This action returns all orders`;
