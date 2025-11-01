@@ -50,6 +50,9 @@ export class Order {
   @Prop({ default: EStatus.PENDING, enum: EStatus })
   status: string;
 
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null })
+  updatedBy: User;
+
   createdAt: Date;
   updatedAt: Date;
 }

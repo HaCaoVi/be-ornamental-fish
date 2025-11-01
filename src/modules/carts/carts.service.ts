@@ -10,7 +10,7 @@ import { CreateCartDto } from './dto/create-cart.dto';
 import { UpdateCartDto } from './dto/update-cart.dto';
 import { Cart } from './schemas/cart.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { Stock } from '@modules/products/schemas/stock.schema';
 import { PaginatedResult } from '@common/interfaces/customize.interface';
 import { buildMeta } from '@common/helpers/helper';
@@ -142,7 +142,10 @@ export class CartsService {
 
   async remove(id: Types.ObjectId) {
     try {
-      await this.cartModel.findByIdAndDelete(id);
+      const deleted = await this.cartModel.deleteOne({ _id: id });
+      if (deleted.deletedCount === 0) {
+        throw new NotFoundException(`Cart with id ${id} not found`);
+      }
       return 'ok';
     } catch (error) {
       this.logger.error('Updated cart error: ' + error.message, error.stack);
@@ -151,13 +154,7 @@ export class CartsService {
     }
   }
 
-  async clearCart(listCardId: string[]) {
-    try {
-      return this.cartModel.deleteMany({ _id: { $in: listCardId } })
-    } catch (error) {
-      this.logger.error('clear cart error: ' + error.message, error.stack);
-      if (error instanceof HttpException) throw error;
-      throw new InternalServerErrorException('Something went wrong!');
-    }
+  async clearCart(listCardId: string[], session: ClientSession) {
+    return this.cartModel.deleteMany({ _id: { $in: listCardId } }, { session })
   }
 }

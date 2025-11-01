@@ -67,18 +67,17 @@ export const parseFilters = (rawFilters: any) => {
 
   let filters = rawFilters;
 
-  // Nếu filters là string, parse 1 lần
   if (typeof filters === 'string') {
     try {
       filters = JSON.parse(filters);
-    } catch {}
+    } catch {
+    }
   }
   if (filters.filters === '') return {};
-  // Nếu filters còn nested { filters: "..." }, unwrap thêm
   if (filters.filters && typeof filters.filters === 'string') {
     try {
       filters = JSON.parse(filters.filters);
-    } catch {}
+    } catch { }
   }
 
   return filters;

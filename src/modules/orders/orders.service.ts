@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -9,10 +9,11 @@ import { Payment } from './schemas/payment.schema';
 import { GhnService } from '@modules/ghn/ghn.service';
 import { v4 as uuidv4 } from 'uuid';
 import { OrderItem } from './schemas/order-item.schema';
-import { EPaymentStatus } from '@common/types/type';
+import { EPaymentStatus, EStatus } from '@common/types/type';
 import { CartsService } from '@modules/carts/carts.service';
 import { PaginatedResult } from '@common/interfaces/customize.interface';
 import { buildMeta } from '@common/helpers/helper';
+import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
 
 @Injectable()
 export class OrdersService {
@@ -87,7 +88,7 @@ export class OrdersService {
       const createdOrderItems = await this.orderItemModel.insertMany(orderItemDocs, { session });
 
       await this.productService.updateQuantity(orderItems, session);
-      await this.cartService.clearCart(listCartId)
+      await this.cartService.clearCart(listCartId, session)
       await session.commitTransaction();
       return { order, orderItems: createdOrderItems };
     } catch (error) {
@@ -100,22 +101,161 @@ export class OrdersService {
     }
   }
 
-  findAll() {
-    return `This action returns all orders`;
+  async findAll(
+    current: number,
+    pageSize: number,
+    query: Record<string, any> = {},
+  ): Promise<PaginatedResult<Order>> {
+    try {
+      if (!current) current = 1;
+      if (!pageSize || pageSize > 50) pageSize = 10;
+
+      const { sort, filters, search } = query;
+
+      const normalizedFilters = parseFilters(filters);
+      const normalizedSort = normalizeSort(sort, ['createdAt', 'updatedAt', 'fullname', 'code']);
+
+      if (search) {
+        const regex = new RegExp(search, 'i');
+        normalizedFilters.$or = [
+          Types.ObjectId.isValid(search) ? { _id: new Types.ObjectId(search + "") } : null,
+          { code: regex },
+          { fullname: regex },
+          { 'user.email': regex },
+        ].filter(Boolean);
+      }
+
+      const skip = (current - 1) * pageSize;
+
+      const pipeline: any[] = [];
+
+      pipeline.push({
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+        { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      )
+
+      // ✅ 1. Match
+      pipeline.push({ $match: { ...normalizedFilters } });
+
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'updatedBy',
+            foreignField: '_id',
+            as: 'updatedBy',
+          },
+        },
+        { $unwind: { path: '$updatedBy', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'payments',
+            localField: 'payment',
+            foreignField: '_id',
+            as: 'payment',
+          },
+        },
+        { $unwind: { path: '$payment', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'orderitems',
+            let: { orderId: '$_id' },
+            pipeline: [
+              {
+                $match: { $expr: { $eq: ['$order', '$$orderId'] } },
+              },
+              {
+                $lookup: {
+                  from: 'products',
+                  localField: 'product',
+                  foreignField: '_id',
+                  as: 'product',
+                },
+              },
+              {
+                $unwind: { path: '$product', preserveNullAndEmptyArrays: true },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  quantity: 1,
+                  price: 1,
+                  discount: 1,
+                  product: {
+                    _id: 1,
+                    code: 1,
+                    name: 1,
+                    mainImageUrl: 1,
+                  },
+                },
+              },
+            ],
+            as: 'orderItems',
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            fullname: 1,
+            code: 1,
+            phone: 1,
+            address: 1,
+            note: 1,
+            totalAmount: 1,
+            shippingFee: 1,
+            status: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            'updatedBy._id': 1,
+            'updatedBy.email': 1,
+            'user._id': 1,
+            'user.name': 1,
+            'user.email': 1,
+            'user.avatar': 1,
+            'user.accountType': 1,
+            payment: 1,
+            orderItems: 1,
+          },
+        }
+      );
+
+      pipeline.push({ $sort: normalizedSort });
+
+      const countPipeline = [...pipeline, { $count: 'total' }];
+      const countResult = await this.orderModel.aggregate(countPipeline).exec();
+      const totalItems = countResult[0]?.total || 0;
+      pipeline.push({ $skip: skip }, { $limit: pageSize });
+      const result = await this.orderModel.aggregate(pipeline).exec();
+      return {
+        meta: buildMeta(current, pageSize, totalItems),
+        result,
+      };
+    } catch (error) {
+      this.logger.error('List order error: ' + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
   }
 
   async findAllOfUser(
     userId: Types.ObjectId,
     current: number,
     pageSize: number,
+    query: Record<string, any> = {},
   ): Promise<PaginatedResult<Order[]>> {
     try {
       if (!current) current = 1;
       if (!pageSize || pageSize > 50) pageSize = 10;
       const skip = (current - 1) * pageSize;
-
+      const normalizedFilters = parseFilters(query.filters);
       const pipeline: any[] = [];
-      const baseMatch = { user: new Types.ObjectId(userId) };
+      const baseMatch = { user: new Types.ObjectId(userId), ...normalizedFilters };
 
       pipeline.push({ $match: baseMatch });
 
@@ -158,6 +298,7 @@ export class OrdersService {
                   _id: 1,
                   product: {
                     _id: 1,
+                    code: 1,
                     name: 1,
                     mainImageUrl: 1,
                   },
@@ -171,6 +312,9 @@ export class OrdersService {
           },
         }
       );
+
+      pipeline.push({ $sort: { createdAt: 1 } });
+
       const countPipeline = [...pipeline, { $count: 'total' }];
       const countResult = await this.orderModel.aggregate(countPipeline).exec();
       const totalItems = countResult[0]?.total || 0;
@@ -191,11 +335,47 @@ export class OrdersService {
     return `This action returns a #${id} order`;
   }
 
-  update(id: number, updateOrderDto: UpdateOrderDto) {
-    return `This action updates a #${id} order`;
+  async update(handler: Types.ObjectId, orderId: Types.ObjectId, updateOrderDto: UpdateOrderDto) {
+    try {
+      const updated = await this.orderModel.updateOne({ _id: orderId }, { status: updateOrderDto.status, updatedBy: handler })
+      if (updated.matchedCount === 0) {
+        throw new NotFoundException(`Order with id ${orderId} not found`);
+      }
+      return {
+        matchedCount: updated.matchedCount,
+        modifiedCount: updated.modifiedCount,
+      };
+    } catch (error) {
+      this.logger.error('Updated order error: ' + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} order`;
+  async remove(orderId: Types.ObjectId) {
+    const session = await this.orderModel.db.startSession();
+    session.startTransaction();
+
+    try {
+      const order = await this.orderModel.findOne({ _id: orderId, status: EStatus.PENDING }).session(session);
+      if (!order) {
+        throw new NotFoundException('Order not found or cannot be deleted');
+      }
+
+      await this.orderItemModel.deleteMany({ order: orderId }).session(session);
+      await this.paymentModel.findOneAndDelete({ _id: order.payment }).session(session);
+      await this.orderModel.deleteOne({ _id: orderId }).session(session);
+
+      await session.commitTransaction();
+      return "ok";
+    } catch (error) {
+      await session.abortTransaction();
+      this.logger.error('Cancelled order error: ' + error.message, error.stack);
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Something went wrong!');
+    } finally {
+      session.endSession();
+    }
   }
+
 }
