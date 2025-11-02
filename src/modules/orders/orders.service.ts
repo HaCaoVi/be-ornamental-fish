@@ -366,14 +366,27 @@ export class OrdersService {
     session.startTransaction();
 
     try {
-      const order = await this.orderModel.findOne({ _id: orderId, status: EStatus.PENDING }).session(session);
+      // Tìm đơn hàng ở trạng thái có thể hủy
+      const order = await this.orderModel
+        .findOne({ _id: orderId, status: EStatus.PENDING })
+        .session(session);
+
       if (!order) {
         throw new NotFoundException('Order not found or cannot be deleted');
       }
 
-      await this.orderItemModel.deleteMany({ order: orderId }).session(session);
-      await this.paymentModel.findOneAndDelete({ _id: order.payment }).session(session);
-      await this.orderModel.deleteOne({ _id: orderId }).session(session);
+      const orderItems = await this.orderItemModel.find({ order: orderId }).session(session);
+      const configOrderItems: any[] = orderItems.map((e) => {
+        return {
+          productId: e.product,
+          quantity: e.quantity
+        }
+      })
+      await this.productService.refundQuantityProduct(configOrderItems, session);
+
+      await this.orderItemModel.deleteMany({ order: orderId }, { session });
+      await this.paymentModel.deleteOne({ _id: order.payment }, { session });
+      await this.orderModel.deleteOne({ _id: orderId }, { session });
 
       await session.commitTransaction();
       return "ok";
@@ -386,6 +399,7 @@ export class OrdersService {
       session.endSession();
     }
   }
+
 
   async updatePaymentStatus(orderCode: string, status: EPaymentStatus, description: string | null, rsqCode: string | null) {
     const order = await this.orderModel.findOne({ code: orderCode });

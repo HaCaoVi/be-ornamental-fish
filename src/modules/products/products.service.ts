@@ -423,4 +423,16 @@ export class ProductsService {
     }
   }
 
+  async refundQuantityProduct(orderItems: any[], session: ClientSession) {
+    await Promise.all(
+      orderItems.map((item) =>
+        this.productModel.updateOne(
+          { _id: item.product },
+          { $inc: { quantity: item.quantity } },
+          { session }
+        )
+      )
+    );
+  }
+
 }

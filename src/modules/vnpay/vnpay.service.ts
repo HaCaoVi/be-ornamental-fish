@@ -1,12 +1,11 @@
-import { BadRequestException, forwardRef, HttpException, Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { forwardRef, HttpException, Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import dayjs from 'dayjs';
 import querystring from "qs"
 import * as crypto from 'crypto';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { OrdersService } from '@modules/orders/orders.service';
 import { EPaymentStatus } from '@common/types/type';
-import { Types } from 'mongoose';
 
 @Injectable()
 export class VnpayService {
