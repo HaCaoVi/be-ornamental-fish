@@ -410,7 +410,10 @@ export class ProductsService {
           quantity: { $gte: item.quantity }
         },
         update: {
-          $inc: { quantity: -item.quantity },
+          $inc: {
+            quantity: -item.quantity,
+            sold: item.quantity
+          },
         },
       },
     }));
@@ -428,11 +431,15 @@ export class ProductsService {
       orderItems.map((item) =>
         this.productModel.updateOne(
           { _id: item.product },
-          { $inc: { quantity: item.quantity } },
+          {
+            $inc: {
+              quantity: item.quantity,
+              sold: -item.quantity
+            }
+          },
           { session }
         )
       )
     );
   }
-
 }

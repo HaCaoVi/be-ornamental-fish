@@ -366,7 +366,6 @@ export class OrdersService {
     session.startTransaction();
 
     try {
-      // Tìm đơn hàng ở trạng thái có thể hủy
       const order = await this.orderModel
         .findOne({ _id: orderId, status: EStatus.PENDING })
         .session(session);
@@ -376,13 +375,8 @@ export class OrdersService {
       }
 
       const orderItems = await this.orderItemModel.find({ order: orderId }).session(session);
-      const configOrderItems: any[] = orderItems.map((e) => {
-        return {
-          productId: e.product,
-          quantity: e.quantity
-        }
-      })
-      await this.productService.refundQuantityProduct(configOrderItems, session);
+
+      await this.productService.refundQuantityProduct(orderItems, session);
 
       await this.orderItemModel.deleteMany({ order: orderId }, { session });
       await this.paymentModel.deleteOne({ _id: order.payment }, { session });
