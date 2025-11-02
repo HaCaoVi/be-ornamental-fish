@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpException, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -9,11 +9,13 @@ import { Payment } from './schemas/payment.schema';
 import { GhnService } from '@modules/ghn/ghn.service';
 import { v4 as uuidv4 } from 'uuid';
 import { OrderItem } from './schemas/order-item.schema';
-import { EPaymentStatus, EStatus } from '@common/types/type';
+import { EPaymentMethod, EPaymentStatus, EStatus } from '@common/types/type';
 import { CartsService } from '@modules/carts/carts.service';
 import { PaginatedResult } from '@common/interfaces/customize.interface';
 import { buildMeta } from '@common/helpers/helper';
 import { normalizeSort, parseFilters } from '@common/helpers/convert.helper';
+import { VnpayService } from '@modules/vnpay/vnpay.service';
+import { Response } from 'express';
 
 @Injectable()
 export class OrdersService {
@@ -24,7 +26,9 @@ export class OrdersService {
     @InjectModel(OrderItem.name) private orderItemModel: Model<OrderItem>,
     private productService: ProductsService,
     private ghnService: GhnService,
-    private cartService: CartsService
+    private cartService: CartsService,
+    @Inject(forwardRef(() => VnpayService))
+    private vnpayService: VnpayService,
   ) { }
 
   async checkStockProduct(orderItems: CreateOrderItemDto[]) {
@@ -42,7 +46,7 @@ export class OrdersService {
     return stocks;
   }
 
-  async create(userId: Types.ObjectId, createOrderDto: CreateOrderDto) {
+  async create(userId: Types.ObjectId, ipAddr: string, createOrderDto: CreateOrderDto) {
     const session = await this.orderModel.db.startSession();
     session.startTransaction();
     try {
@@ -90,6 +94,11 @@ export class OrdersService {
       await this.productService.updateQuantity(orderItems, session);
       await this.cartService.clearCart(listCartId, session)
       await session.commitTransaction();
+      if (payment.method === EPaymentMethod.VN_PAY) {
+        const totalFinal = ghnShipping.totalAmount + ghnShipping.total
+        const vnpUrl = this.vnpayService.createLinkPaymentVNPay(order.code, totalFinal, ipAddr);
+        return { redirectUrl: vnpUrl };
+      }
       return { order, orderItems: createdOrderItems };
     } catch (error) {
       await session.abortTransaction();
@@ -313,7 +322,7 @@ export class OrdersService {
         }
       );
 
-      pipeline.push({ $sort: { createdAt: 1 } });
+      pipeline.push({ $sort: { createdAt: -1 } });
 
       const countPipeline = [...pipeline, { $count: 'total' }];
       const countResult = await this.orderModel.aggregate(countPipeline).exec();
@@ -378,4 +387,11 @@ export class OrdersService {
     }
   }
 
+  async updatePaymentStatus(orderCode: string, status: EPaymentStatus, description: string | null, rsqCode: string | null) {
+    const order = await this.orderModel.findOne({ code: orderCode });
+    if (!order) {
+      return null;
+    }
+    return this.paymentModel.updateOne({ _id: order.payment }, { status, description, rsqCode })
+  }
 }

@@ -17,6 +17,12 @@ export class Payment {
   @Prop({ default: null })
   transactionId: string;
 
+  @Prop({ default: null })
+  rspCode: string;
+
+  @Prop({ default: null })
+  description: string;
+
   createdAt: Date;
   updatedAt: Date;
 }

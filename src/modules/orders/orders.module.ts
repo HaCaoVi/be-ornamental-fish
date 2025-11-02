@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -8,6 +8,7 @@ import { Payment, PaymentSchema } from './schemas/payment.schema';
 import { ProductsModule } from '@modules/products/products.module';
 import { GhnModule } from '@modules/ghn/ghn.module';
 import { CartsModule } from '@modules/carts/carts.module';
+import { VnpayModule } from '@modules/vnpay/vnpay.module';
 
 @Module({
   imports: [
@@ -18,9 +19,11 @@ import { CartsModule } from '@modules/carts/carts.module';
     MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]),
     ProductsModule,
     GhnModule,
-    CartsModule
+    CartsModule,
+    forwardRef(() => VnpayModule),
   ],
   controllers: [OrdersController],
   providers: [OrdersService],
+  exports: [OrdersService]
 })
 export class OrdersModule { }

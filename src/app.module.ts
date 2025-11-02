@@ -13,6 +13,7 @@ import { MailModule } from '@modules/mail/mail.module';
 import { CartsModule } from '@modules/carts/carts.module';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { GhnModule } from '@modules/ghn/ghn.module';
+import { VnpayModule } from '@modules/vnpay/vnpay.module';
 
 @Module({
   imports: [
@@ -36,7 +37,8 @@ import { GhnModule } from '@modules/ghn/ghn.module';
     MailModule,
     CartsModule,
     OrdersModule,
-    GhnModule
+    GhnModule,
+    VnpayModule
   ],
   controllers: [AppController],
   providers: [AppService],

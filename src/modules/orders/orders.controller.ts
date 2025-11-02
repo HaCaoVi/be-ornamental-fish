@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   Query,
+  Req,
+  Res,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -16,6 +18,8 @@ import type { IToken } from '@common/interfaces/customize.interface';
 import { ERole } from '@common/types/type';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
+import type { Request, Response } from 'express';
+import { getClientIp } from '@common/helpers/helper';
 
 @Controller('orders')
 export class OrdersController {
@@ -25,9 +29,11 @@ export class OrdersController {
   @ResponseMessage("Created successfully")
   create(
     @UserReq() user: IToken,
-    @Body() createOrderDto: CreateOrderDto
+    @Body() createOrderDto: CreateOrderDto,
+    @Req() req: Request,
   ) {
-    return this.ordersService.create(user.sub, createOrderDto);
+    const ipAddr = getClientIp(req)
+    return this.ordersService.create(user.sub, ipAddr, createOrderDto);
   }
 
   @Get("list-order")
