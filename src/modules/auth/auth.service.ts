@@ -25,7 +25,6 @@ import { ActiveAccountDto } from './dto/active-account.dto';
 import { RegisterUserDto } from './dto/register.dto';
 import { CUSTOMER_ROLE } from '@common/constants/constant';
 import { Response } from 'express';
-import ms from 'ms';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { Types } from 'mongoose';
 import { ChangePasswordDto, UpdateProfileUserDto } from './dto/profile.dto';
@@ -54,19 +53,6 @@ export class AuthService {
     });
   }
 
-  addRefreshTokenInCookie(res: Response, token: string) {
-    res.clearCookie('refresh_token');
-    res.cookie('refresh_token', token, {
-      httpOnly: true,
-      secure: this.configService.get<string>('NODE_ENV') === 'production',
-      maxAge: +ms(
-        this.configService.get<string>('JWT_REFRESH_EXPIRE') as ms.StringValue,
-      ),
-      sameSite: 'lax',
-      path: '/',
-    });
-  }
-
   async findUserByUsername(username: string): Promise<any | null> {
     const user = await this.userModel
       .findOne({ email: username, accountType: EAccountType.LOCAL })
@@ -87,7 +73,7 @@ export class AuthService {
     return isMatch ? user : null;
   }
 
-  async login(res: Response, user: IToken) {
+  async login(user: IToken) {
     try {
       const { email, name, role, sub, avatar } = user;
       const access_token = await this.signAccessTokenJWT(user);
@@ -104,7 +90,6 @@ export class AuthService {
           'Failed to update refresh token',
         );
       }
-      // this.addRefreshTokenInCookie(res, refresh_token);
 
       return {
         refresh_token,
@@ -135,7 +120,7 @@ export class AuthService {
     }
   }
 
-  async refreshToken(res: Response, currentRefreshToken: string) {
+  async refreshToken(currentRefreshToken: string) {
     try {
       const user = await this.verifyRefreshTokenJWT(currentRefreshToken);
       if (!user) {
@@ -164,7 +149,6 @@ export class AuthService {
       if (updateRefreshToken.matchedCount === 0) {
         throw new NotFoundException('User not found');
       }
-      // this.addRefreshTokenInCookie(res, newRefreshToken);
       return {
         refresh_token: newRefreshToken,
         access_token,
@@ -374,9 +358,9 @@ export class AuthService {
         refreshToken: hashTokenSHA256(refresh_token),
       });
 
-      this.addRefreshTokenInCookie(res, refresh_token);
+      // this.addRefreshTokenInCookie(res, refresh_token);
 
-      return { access_token };
+      return { access_token, refresh_token };
     } catch (error) {
       this.logger.error('Google login error: ' + error.message, error.stack);
       if (error instanceof HttpException) throw error;

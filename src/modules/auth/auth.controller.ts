@@ -26,7 +26,6 @@ import {
 import { RegisterUserDto } from './dto/register.dto';
 import { GoogleAuthGuard } from './passport/google-auth.guard';
 import type { Response } from 'express';
-import { ConfigService } from '@nestjs/config';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ChangePasswordDto, UpdateProfileUserDto } from './dto/profile.dto';
 
@@ -34,15 +33,14 @@ import { ChangePasswordDto, UpdateProfileUserDto } from './dto/profile.dto';
 export class AuthController {
   constructor(
     private authService: AuthService,
-    private configService: ConfigService,
-  ) {}
+  ) { }
 
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @ResponseMessage('Login successfully')
-  login(@Res({ passthrough: true }) res: Response, @UserReq() user: IToken) {
-    return this.authService.login(res, user);
+  login(@UserReq() user: IToken) {
+    return this.authService.login(user);
   }
 
   @Get('account')
@@ -52,13 +50,12 @@ export class AuthController {
   }
 
   @Public()
-  @Get('refresh')
+  @Post('refresh')
   @ResponseMessage('Refresh successfully')
   refreshToken(
-    @Res({ passthrough: true }) res: Response,
     @Cookies('refresh_token') refreshToken: string,
   ) {
-    return this.authService.refreshToken(res, refreshToken);
+    return this.authService.refreshToken(refreshToken);
   }
 
   @Post('logout')
@@ -98,15 +95,16 @@ export class AuthController {
   @Public()
   @Get('google')
   @UseGuards(GoogleAuthGuard)
-  async googleAuth() {}
+  googleAuth() { }
 
   @Public()
   @Get('google/redirect')
   @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(@UserReq() user: IGoogleUser, @Res() res: Response) {
-    const token = await this.authService.loginWithGoogle(res, user);
-    const frontendUrl = `${this.configService.get<string>('FE_ORIGIN_URL')}/auth/google-success?token=${token.access_token}`;
-    return res.redirect(frontendUrl);
+  googleAuthRedirect(@UserReq() user: IGoogleUser, @Res() res: Response) {
+    // const token = await this.authService.loginWithGoogle(res, user);
+    // const frontendUrl = `${this.configService.get<string>('FE_ORIGIN_URL')}/auth/google-success?token=${token.access_token}`;
+    // return res.redirect(frontendUrl);
+    return this.authService.loginWithGoogle(res, user);
   }
 
   @Get('view-profile')
